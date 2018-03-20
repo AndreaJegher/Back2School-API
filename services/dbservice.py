@@ -16,15 +16,15 @@ def load_user(username):
         return None
     return cursor.next()
 
-def load_session(username):
-    cursor = sessions.find({'username':username})
+def load_session(sessionid):
+    cursor = sessions.find({'sessionid':sessionid})
     if cursor.count() < 1:
         return None
     return cursor.next()
 
 def store_session(username, sessionid):
     sessions.find_one_and_update(
-        {'username':username},
-        {'sessionid':sessionid},
+        { 'username' : username },
+        { '$set' : {'sessionid' : sessionid} },
         upsert=True
     )
