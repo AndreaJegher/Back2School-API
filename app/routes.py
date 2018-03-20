@@ -2,15 +2,23 @@ from app import app
 from flask import request, render_template, make_response
 import hashlib, uuid
 import os
+from functools import wraps
 from services.dbservice import load_user, load_session, store_session
 
 def auth_check(fun):
-    sessionid = request.cookies['sessionid']
-    session   = load_session(sessionid)
+    @wraps(fun)
+    def wrapper():
 
-    if contex is not None and session['sessionid'] == sessionid:
-        return fun()
-    return render_template('login.html', title='B2S - Login', message='Invalid session!')
+        try:
+            sessionid = request.cookies['sessionid']
+        except:
+            return render_template('login.html', title='B2S - Login', message='Invalid session!')
+        session   = load_session(sessionid)
+
+        if contex is not None and session['sessionid'] == sessionid:
+            return fun()
+        return render_template('login.html', title='B2S - Login', message='Invalid session!')
+    return wrapper
 
 @app.route('/')
 def index():
@@ -41,15 +49,17 @@ def authenticate():
 
     return render_template('login.html', title='B2S - Login', message='Invalid username or password!')
 
-@app.route('/register', methods['GET'])
+@app.route('/register', methods=['GET'])
+@auth_check
 def register():
     return render_template('register.html', title='B2S - Register')
 
-@app.route('/register', methods['POST'])
+@app.route('/register', methods=['POST'])
+@auth_check
 def add_user():
     return render_template('register.html', title='B2S - Register', message=message)
 
-@app.route('/home', methods['GET'])
+@app.route('/home', methods=['GET'])
 @auth_check
 def home():
     return render_template('home.html', title='B2S - home', user=user)
