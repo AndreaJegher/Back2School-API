@@ -15,7 +15,7 @@ def auth_check(fun):
             return render_template('login.html', title='B2S - Login', message='Invalid session!')
 
         session = load_session(sessionid)
-        print (session)
+        username = session['username']
 
         if session is not None and session['sessionid'] == sessionid:
             return fun()
@@ -64,4 +64,7 @@ def add_user():
 @app.route('/home', methods=['GET'])
 @auth_check
 def home():
-    return render_template('home.html', title='B2S - home', user=user)
+    sessionid = request.cookies['sessionid']
+    session = load_session(sessionid)
+    username = session['username']
+    return render_template('home.html', title='B2S - home', username=username)
