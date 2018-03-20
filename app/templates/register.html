@@ -1,18 +1,19 @@
 {% extends "base.html" %}
 
 {% block body %}
+  {% if message is not none %}
+  <div>
+    <h1>{{ message }}</h1>
+  </div>
+  {% endif %}
   <div>
     <form>
-      <label for="name">Name</label>
-      <input id="name" type="text"/></br>
-      <label for="surname">Surname</label>
-      <input id="surname" type="text"/></br>
       <label for="email">Email</label>
-      <input id="email" type="email"/></br>
+      <input id="email" type="email"/><br>
       <label for="username">Username</label>
-      <input id="username" type="text"/></br>
+      <input id="username" type="text"/><br>
       <label for="password">Password</label>
-      <input id="password" type="password"/></br>
+      <input id="password" type="password"/><br>
       <input type="submit"/>
     </form>
   </div>
