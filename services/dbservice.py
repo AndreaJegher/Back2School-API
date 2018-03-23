@@ -16,6 +16,15 @@ def load_user(username):
         return None
     return cursor.next()
 
+def insert_user(username, pwdhash, salt):
+    users.insert({'username':username, 'pwdhash':pwdhash, 'salt':salt})
+
+def update_user_profile(username, data):
+    users.find_one_and_update(
+        {'username':username},
+        {'$set':{'profile.'+key: data[key] for key in data}}
+    )
+
 def load_session(sessionid):
     cursor = sessions.find({'sessionid':sessionid})
     if cursor.count() < 1:

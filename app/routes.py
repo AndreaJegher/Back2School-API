@@ -83,8 +83,14 @@ def post_profile_edit():
     stored_session = load_session(session['sessionid'])
     user = load_user(stored_session['username'])
 
-    for param in request.form:
-        print (param, request.form[param])
+    name = request.form['name']
+    surname = request.form['surname']
+    birthdate = request.form['birthdate']
+    address = request.form['address']
+    email = request.form['email']
+    phone = request.form['phone']
+
+    
 
     return redirect('/profile', 302)
 
