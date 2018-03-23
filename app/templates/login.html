@@ -1,11 +1,6 @@
 {% extends "base.html" %}
 
 {% block body %}
-  {% if message is not none %}
-  <div>
-    <h1>{{ message }}</h1>
-  </div>
-  {% endif %}
   <div>
     <form action="/login" method="post">
       <label for="username">Username</label>

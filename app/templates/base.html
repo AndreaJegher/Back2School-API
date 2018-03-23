@@ -7,6 +7,11 @@
     <title>{{title}}</title>
   </head>
   <body>
+    {% if message is not none %}
+    <div>
+      <h1>{{ message }}</h1>
+    </div>
+    {% endif %}
     {% block body %}{% endblock %}
   </body>
 </html>

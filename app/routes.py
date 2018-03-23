@@ -4,7 +4,7 @@ import hashlib, uuid
 import os
 import binascii
 from functools import wraps
-from services.dbservice import load_user, load_session, store_session
+from services.dbservice import load_user, load_session, store_session, update_user_profile
 
 def auth_check(fun):
     @wraps(fun)
@@ -77,20 +77,31 @@ def get_profile_edit():
     user = load_user(stored_session['username'])
     return render_template('profile_edit.html', profile=user['profile'], is_admin=True)
 
+def insert_non_empty_in_dict(d, l):
+    for i,j in l:
+        if j is not None and len(j) > 0:
+            d[i]=j
+
 @app.route('/profile/edit', methods=['POST'])
 @auth_check
 def post_profile_edit():
     stored_session = load_session(session['sessionid'])
     user = load_user(stored_session['username'])
+    username = user['username']
+    is_admin = True
 
-    name = request.form['name']
-    surname = request.form['surname']
-    birthdate = request.form['birthdate']
-    address = request.form['address']
-    email = request.form['email']
-    phone = request.form['phone']
+    try:
+        data = {}
 
-    
+        if(is_admin):
+            insert_non_empty_in_dict(data, [(x,request.form[x]) for x in ['name', 'surname', 'birthdate']])
+
+        insert_non_empty_in_dict(data, [(x,request.form[x]) for x in ['address', 'email', 'phone']])
+
+        print (username, data)
+        update_user_profile(username, data)
+    except:
+        return render_template('profile_edit.html', profile=user['profile'], message='Input error', is_admin=True)
 
     return redirect('/profile', 302)
 

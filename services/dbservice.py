@@ -20,6 +20,7 @@ def insert_user(username, pwdhash, salt):
     users.insert({'username':username, 'pwdhash':pwdhash, 'salt':salt})
 
 def update_user_profile(username, data):
+    print ({'$set':{'profile.'+key: data[key] for key in data}})
     users.find_one_and_update(
         {'username':username},
         {'$set':{'profile.'+key: data[key] for key in data}}
