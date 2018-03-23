@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block body %}
+  <div>
+  {% for item in profile %}
+    <p>{{item}}: {{profile[item]}}</p>
+  {% endfor %}
+  </div>
+  <a href="/profile/edit">Edit profile</a>
+{% endblock %}

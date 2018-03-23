@@ -75,14 +75,18 @@ def get_profile():
 def get_profile_edit():
     stored_session = load_session(session['sessionid'])
     user = load_user(stored_session['username'])
-    return render_template('profile_edit.html')
+    return render_template('profile_edit.html', profile=user['profile'], is_admin=True)
 
 @app.route('/profile/edit', methods=['POST'])
 @auth_check
 def post_profile_edit():
     stored_session = load_session(session['sessionid'])
     user = load_user(stored_session['username'])
-    return render_template('profile_edit.html')
+
+    for param in request.form:
+        print (param, request.form[param])
+
+    return redirect('/profile', 302)
 
 @app.route('/appointments', methods=['GET'])
 @auth_check
