@@ -77,7 +77,7 @@ def home():
     sessionid = session['sessionid']
     stored_session = load_session(sessionid)
     username = stored_session['username']
-    links = [("/profile", "Profile"), ("/appointments", "Appointments"), ("/notifications", "Notifications")]
+    links = [("/profile", "Profile"), ("/appointments", "Appointments"), ("/notifications", "Notifications"), ("/logout", "Log out")]
     return render_template('home.html', title='B2S - home', username=username, links=links)
 
 #All
