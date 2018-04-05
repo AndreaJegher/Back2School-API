@@ -136,7 +136,7 @@ def get_appointment_form():
 @app.route('/appointment', methods=['POST'])
 @auth_check
 def post_appointment():
-    return rendirect('/home'), 302
+    return redirect('/home'), 302
 
 @app.route('/appointment/<id>', methods=['GET'])
 @auth_check
