@@ -60,7 +60,8 @@ def home():
     sessionid = session['sessionid']
     stored_session = load_session(sessionid)
     username = stored_session['username']
-    return render_template('home.html', title='B2S - home', username=username)
+    links = [("/profile", "Profile"), ("/appointments", "Appointments"), ("/notifications", "Notifications")]
+    return render_template('home.html', title='B2S - home', username=username, links=links)
 
 #All
 @app.route('/profile', methods=['GET'])
@@ -105,15 +106,23 @@ def post_profile_edit():
 
     return redirect('/profile', 302)
 
+@app.route('/profile/<username>', methods=['GET'])
+@auth_check
+def get_public_profile(username):
+    user = load_user(username)
+    return render_template('public_profile.html', profile=user['profile'])
+
 @app.route('/appointments', methods=['GET'])
 @auth_check
 def get_appointments():
-    return render_template('appointments.html')
+    stored_session = load_session(session['sessionid'])
+    appointments = load_appointments(stored_session['username'])
+    return render_template('appointments.html', appointments)
 
-@app.route('/appointment', methods=['POST'])
+@app.route('appointment', methods=['POST'])
 @auth_check
 def post_appointment():
-    return render_template('appointment.html')
+    return rendirect('/home'), 302
 
 @app.route('/appointment/<id>', methods=['GET'])
 @auth_check

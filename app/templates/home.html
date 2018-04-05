@@ -3,6 +3,8 @@
 {% block body %}
   <div class="">
     <h4>Welcome home {{ username }}!</h4>
-    <a href="/profile">Profile</a>
+    {% for link in links %}
+      <a href="{{link[0]}}">{{link[1]}}</a>
+    {% endofor %}
   </div>
 {% endblock %}
