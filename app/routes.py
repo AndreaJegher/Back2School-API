@@ -4,7 +4,7 @@ import hashlib, uuid
 import os
 import binascii
 from functools import wraps
-from services.dbservice import load_user, load_session, store_session, update_user_profile
+from services.dbservice import load_user, load_session, store_session, update_user_profile, load_appointments
 
 def auth_check(fun):
     @wraps(fun)
@@ -25,10 +25,20 @@ def auth_check(fun):
 
 @app.route('/')
 def index():
-    return render_template('index.html', title='B2S - Home')
+    try:
+        sessionid = session['sessionid']
+        return redirect('/home'), 302
+    except:
+        pass
+    return render_template('index.html', title='B2S')
 
 @app.route('/login', methods=['GET'])
 def login():
+    try:
+        sessionid = session['sessionid']
+        return redirect('/home'), 302
+    except:
+        pass
     return render_template('login.html', title='B2S - Login')
 
 @app.route('/login', methods=['POST'])
@@ -56,7 +66,6 @@ def authenticate():
 @app.route('/home', methods=['GET'])
 @auth_check
 def home():
-    # sessionid = request.cookies['sessionid']
     sessionid = session['sessionid']
     stored_session = load_session(sessionid)
     username = stored_session['username']
@@ -117,9 +126,14 @@ def get_public_profile(username):
 def get_appointments():
     stored_session = load_session(session['sessionid'])
     appointments = load_appointments(stored_session['username'])
-    return render_template('appointments.html', appointments)
+    return render_template('appointments.html', appointments=appointments)
 
-@app.route('appointment', methods=['POST'])
+@app.route('/appointment/form', methods=['GET'])
+@auth_check
+def get_appointment_form():
+    return render_template('appointment_form.html')
+
+@app.route('/appointment', methods=['POST'])
 @auth_check
 def post_appointment():
     return rendirect('/home'), 302

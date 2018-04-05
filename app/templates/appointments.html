@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block body %}
+  <a href="/appointment/form">New appointment</a>
+  <div>
+    {% if appointments %}
+    <p>Appointments</p>
+    <ul>
+    {% for appointment in appointments %}
+      {% for item in appointment%}
+        <li>{{item}}: {{appointment[item]}}</li>
+      {% endfor %}
+    {% endfor %}
+    </ul>
+    {% else %}
+    <p>No appointments</p>
+    {% endif %}
+  </div>
+{% endblock %}

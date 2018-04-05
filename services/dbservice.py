@@ -48,13 +48,13 @@ def load_appointments(username):
 def store_appointment(sender, receiver, date, topic):
     appointments.find_one_and_update(
         {'sender':sender, 'receiver':receiver, 'date':date},
-        {'$set'{'topic':topic}}
+        {'$set' : {'topic':topic}}
     )
 
 def edit_appointment_date(sender, receiver, date, new_date):
     appointments.find_one_and_update(
         {'sender':sender, 'receiver':receiver, 'date':date},
-        {'$set'{'date':new_date}}
+        {'$set' : {'date':new_date}}
     )
 
 def remove_appointment(sender, receiver, date):

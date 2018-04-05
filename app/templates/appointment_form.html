@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block body %}
+<form action="/appointment" method="post">
+  <label for="receiver">Receiver</label>
+  <input id="receiver" name="receiver" type="email"><br>
+  <label for="topic">Topic</label>
+  <input id="topic" name="topic" type="text"><br>
+  <label for="date">Date</label>
+  <input id="date" name="date" type="date"><br>
+  <label for="time">Time</label>
+  <input id="time" name="time" type="time"><br>
+  <input type="submit">
+</form>
+{% endblock %}
