@@ -4,7 +4,7 @@ import hashlib, uuid
 import os
 import binascii
 from functools import wraps
-from services.dbservice import load_user, load_session, store_session, update_user_profile, load_appointments
+from services.dbservice import load_user, load_session, store_session, remove_session, update_user_profile, load_appointments
 
 def auth_check(fun):
     @wraps(fun)
@@ -62,6 +62,14 @@ def authenticate():
             return response
 
     return render_template('login.html', title='B2S - Login', message='Invalid username or password!')
+
+@app.route('/logout', methods=['GET'])
+@auth_check
+def logout():
+    sessionid = session['sessionid']
+    remove_session(sessionid)
+    session.pop(sessionid, None)
+    return redirect('/'), 302
 
 @app.route('/home', methods=['GET'])
 @auth_check
