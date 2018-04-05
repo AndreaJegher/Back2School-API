@@ -10,15 +10,14 @@ def auth_check(fun):
     @wraps(fun)
     def wrapper():
         try:
-            # sessionid = request.cookies['sessionid']
             sessionid = session['sessionid']
         except:
             return redirect('/login', 302)
 
         stored_session = load_session(sessionid)
-        username = stored_session['username']
 
         if stored_session is not None and stored_session['sessionid'] == sessionid:
+            username = stored_session['username']
             return fun()
         return render_template('login.html', title='B2S - Login', message='Invalid session!')
     return wrapper

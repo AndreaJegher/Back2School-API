@@ -40,7 +40,7 @@ def store_session(username, sessionid):
     )
 
 def remove_session(sessionid):
-    sessions.find_one_and_delete('sessionid':sessionid)
+    sessions.find_one_and_delete({'sessionid':sessionid})
 
 def load_appointments(username):
     cursor = appointments.find({'receiver':username})
