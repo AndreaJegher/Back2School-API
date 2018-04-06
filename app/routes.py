@@ -4,11 +4,11 @@ import hashlib, uuid
 import os
 import binascii
 from functools import wraps
-from services.dbservice import load_user, load_session, store_session, remove_session, update_user_profile, load_appointments
+from services.dbservice import *
 
 def auth_check(fun):
     @wraps(fun)
-    def wrapper():
+    def wrapper(*args, **kwargs):
         try:
             sessionid = session['sessionid']
         except:
@@ -18,7 +18,7 @@ def auth_check(fun):
 
         if stored_session is not None and stored_session['sessionid'] == sessionid:
             username = stored_session['username']
-            return fun()
+            return fun(*args, **kwargs)
         return render_template('login.html', title='B2S - Login', message='Invalid session!')
     return wrapper
 
@@ -56,7 +56,6 @@ def authenticate():
             sessionid = str(binascii.hexlify(os.urandom(24)).decode())
             store_session(username, sessionid)
             response = make_response(redirect('home', 302))
-            # response.set_cookie('sessionid', sessionid)
             session['sessionid'] = sessionid
             return response
 
@@ -132,7 +131,8 @@ def get_public_profile(username):
 @auth_check
 def get_appointments():
     stored_session = load_session(session['sessionid'])
-    appointments = load_appointments(stored_session['username'])
+    user = load_user(stored_session['username'])
+    appointments = load_appointments(user['profile']['email'])
     return render_template('appointments.html', appointments=appointments)
 
 @app.route('/appointment/form', methods=['GET'])
@@ -143,12 +143,29 @@ def get_appointment_form():
 @app.route('/appointment', methods=['POST'])
 @auth_check
 def post_appointment():
+    data = request.form
+    stored_session = load_session(session['sessionid'])
+    user = load_user(stored_session['username'])
+    store_appointment(sender=user['profile']['email'], receiver=data['receiver'],
+                      date=data['date'], topic=data['topic'], time=data['time'])
     return redirect('/home'), 302
 
 @app.route('/appointment/<id>', methods=['GET'])
 @auth_check
 def get_appointment(id):
-    return render_template('appointment.html')
+    stored_session = load_session(session['sessionid'])
+    user = load_user(stored_session['username'])
+    appointment = load_appointment(number=int(id), email=user['profile']['email'])
+    can_edit = user['profile']['email'] == appointment['sender']
+    return render_template('appointment.html', appointment=appointment, can_edit=can_edit)
+
+@app.route('/appointment/edit/<id>', methods=['GET'])
+@auth_check
+def get_appointment_edit(id):
+    stored_session = load_session(session['sessionid'])
+    user = load_user(stored_session['username'])
+    appointment = load_appointment(number=int(id), email=user['profile']['email'])
+    return render_template('appointment_form.html', appointment=appointment)
 
 @app.route('/appointment/<id>', methods=['PUT'])
 @auth_check

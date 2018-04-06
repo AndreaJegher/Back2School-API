@@ -11,6 +11,19 @@ events   = db.events
 sessions = db.sessions
 appointments = db.appointments
 
+def getNextSequence(collection):
+    cursor = collection.find({'sequence':{'$gt':-1}})
+    if cursor.count() < 1:
+        collection.insert({'sequence':0})
+        return 0
+    else:
+        value = cursor.next()['sequence'] + 1
+        collection.find_one_and_update(
+            {'sequence':value-1},
+            {'$set':{'sequence':value+1}}
+        )
+        return value
+
 def load_user(username):
     cursor = users.find({'username':username})
     if cursor.count() < 1:
@@ -42,23 +55,27 @@ def store_session(username, sessionid):
 def remove_session(sessionid):
     sessions.find_one_and_delete({'sessionid':sessionid})
 
-def load_appointments(username):
-    cursor = appointments.find({'receiver':username})
+def load_appointments(email):
+    cursor = appointments.find({'$or':[{'receiver':email}, {'sender':email}]}, {'_id':0})
     if cursor.count() < 1:
         return None
     return cursor
 
-def store_appointment(sender, receiver, date, topic):
+def store_appointment(sender, receiver, date, topic, time):
+    number = getNextSequence(appointments)
+    appointments.insert({'number':number, 'sender':sender, 'receiver':receiver, 'date':date, 'time':time, 'topic':topic})
+
+def load_appointment(number, email):
+    cursor = appointments.find({'number':number, '$or':[{'receiver':email}, {'sender':email}]}, {'_id':0})
+    if cursor.count() < 1:
+        return None
+    return cursor.next()
+
+def edit_appointment(number, sender, receiver, date, topic, time):
     appointments.find_one_and_update(
-        {'sender':sender, 'receiver':receiver, 'date':date},
-        {'$set' : {'topic':topic}}
+        {'number':number},
+        {'$set' : {'sender':sender, 'receiver':receiver, 'date':date, 'time':time, 'topic':topic}}
     )
 
-def edit_appointment_date(sender, receiver, date, new_date):
-    appointments.find_one_and_update(
-        {'sender':sender, 'receiver':receiver, 'date':date},
-        {'$set' : {'date':new_date}}
-    )
-
-def remove_appointment(sender, receiver, date):
-    appointments.find_one_and_delete({'sender':sender, 'receiver':receiver, 'date':date})
+def remove_appointment(number, sender):
+    appointments.find_one_and_delete({'number':number})

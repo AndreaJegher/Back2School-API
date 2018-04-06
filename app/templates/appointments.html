@@ -7,9 +7,13 @@
     <p>Appointments</p>
     <ul>
     {% for appointment in appointments %}
-      {% for item in appointment%}
-        <li>{{item}}: {{appointment[item]}}</li>
-      {% endfor %}
+      <li>
+        <ul>
+          <li>Topic: {{appointment['topic']}}</li>
+          <li>Sender: {{appointment['sender']}}</li>
+          <a href="/appointment/{{appointment['number']}}">Details</a>
+        </ul>
+      </li>
     {% endfor %}
     </ul>
     {% else %}

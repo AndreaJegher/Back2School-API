@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block body %}
+  <div>
+    {% if appointment %}
+    <p>Appointment</p>
+    <ul>
+      {% for item in appointment%}
+        <li>{{item}}: {{appointment[item]}}</li>
+      {% endfor %}
+    </ul>
+    {% if can_edit %}
+    <a href="/appointment/edit/{{appointment['number']}}" >Edit appointment</a>
+    {% endif %}
+    {% else %}
+    <p>Something went wrong</p>
+    {% endif %}
+  </div>
+{% endblock %}

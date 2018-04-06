@@ -1,15 +1,16 @@
 {% extends "base.html" %}
 
 {% block body %}
-<form action="/appointment" method="post">
+<form {% if appointment %} action="/appointment/{{appointment['number']}}" method="put" {% else %} action="/appointment" method="post" {% endif %} >
   <label for="receiver">Receiver</label>
-  <input id="receiver" name="receiver" type="email"><br>
+  <input id="receiver" name="receiver" type="email" {% if appointment %} placeholder="{{appointment['receiver']}}" {% endif %} ><br>
   <label for="topic">Topic</label>
-  <input id="topic" name="topic" type="text"><br>
+  <input id="topic" name="topic" type="text" {% if appointment %} placeholder="{{appointment['topic']}}" {% endif %}><br>
   <label for="date">Date</label>
-  <input id="date" name="date" type="date"><br>
+  <input id="date" name="date" type="date" {% if appointment %} placeholder="{{appointment['date']}}" {% endif %}><br>
   <label for="time">Time</label>
-  <input id="time" name="time" type="time"><br>
+  <input id="time" name="time" type="time" {% if appointment %} placeholder="{{appointment['time']}}" {% endif %}><br>
   <input type="submit">
+  <input type="hidden" name="_METHOD" value="PUT"/>
 </form>
 {% endblock %}
