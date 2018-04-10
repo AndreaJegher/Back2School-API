@@ -153,7 +153,8 @@ def get_appointment(id):
     stored_session = load_session(request.cookies['sessionid'])
     user = load_user(stored_session['username'])
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
-    can_edit = user['profile']['email'] == appointment['sender']
+    if appointment is None:
+        return jresponse('appointment not found', 404)
     return jsonify(appointment)
 
 @app.route('/edit/appointment/<id>', methods=['PUT'])
@@ -164,17 +165,19 @@ def put_appointment(id):
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
     if appointment is None:
         return jresponse('you cannot edit this appointment', type='error')
-    edit_appointment(number=id, sender=user['profile']['email'], receiver=data['receiver'],
+    edit_appointment(number=int(id), sender=user['profile']['email'], receiver=data['receiver'],
                      date=data['date'], topic=data['topic'], time=data['time'])
     return jresponse('appointment updated')
 
 @app.route('/appointment/<id>', methods=['DELETE'])
 @auth_check
 def delete_appointment(id):
+    stored_session = load_session(request.cookies['sessionid'])
+    user = load_user(stored_session['username'])
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
-    if appointment is None:
+    if appointment is None or user['profile']['email'] != appointment['sender']:
         return jresponse('you cannot remove this appointment', type='error')
-    remove_appointment(id)
+    remove_appointment(number=int(id))
     return jsonify('appointment removed')
 
 @app.route('/notifications', methods=['GET'])
