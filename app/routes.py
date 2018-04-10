@@ -135,6 +135,8 @@ def get_appointments():
     stored_session = load_session(request.cookies['sessionid'])
     user = load_user(stored_session['username'])
     appointments = load_appointments(user['profile']['email'])
+    if appointments is None:
+        return jresponse('no appointments found'), 404
     return jsonify([x for x in appointments])
 
 @app.route('/appointment', methods=['POST'])
@@ -183,12 +185,18 @@ def delete_appointment(id):
 @app.route('/notifications', methods=['GET'])
 @auth_check
 def get_notifications():
-    return jsonify('notifications.html')
+    notifications = load_notifications()
+    if notifications is None:
+        return jresponse('no notifications found'), 404
+    return jsonify([x for x in notifications])
 
 @app.route('/notification/<id>', methods=['GET'])
 @auth_check
 def get_notification(id):
-    return jsonify('notification.html')
+    notification = load_notification(id)
+    if notification is None:
+        return jresponse('notificatin not found', type='error'), 404
+    return jsonify(notification)
 
 #Parents
 @app.route('/children', methods=['GET'])

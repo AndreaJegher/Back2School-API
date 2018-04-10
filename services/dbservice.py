@@ -7,9 +7,9 @@ users    = db.users
 grades   = db.grades
 classes  = db.classes
 payments = db.payments
-events   = db.events
 sessions = db.sessions
 appointments = db.appointments
+notifications   = db.notifications
 
 def getNextSequence(collection):
     cursor = collection.find({'sequence':{'$gt':-1}})
@@ -79,3 +79,15 @@ def edit_appointment(number, sender, receiver, date, topic, time):
 
 def remove_appointment(number):
     appointments.find_one_and_delete({'number':number})
+
+def load_notifications():
+    cursor = notifications.find({}, {'_id':0})
+    if cursor.count() < 1:
+        return None
+    return cursor
+
+def load_notification(number):
+    cursor = notifications.find({number:'number'}, {'_id':0})
+    if cursor.count() < 1:
+        return None
+    return cursor
