@@ -1,44 +1,38 @@
 from app import app
-from flask import request, render_template, make_response, redirect, session
+from flask import request, jsonify, session, make_response
 import hashlib, uuid
 import os
 import binascii
 from functools import wraps
 from services.dbservice import *
 
+def jresponse(s, type='message'):
+    return jsonify({type:s})
+
 def auth_check(fun):
     @wraps(fun)
     def wrapper(*args, **kwargs):
         try:
-            sessionid = session['sessionid']
+            sessionid = request.cookies['sessionid']
         except:
-            return redirect('/login', 302)
+            return jresponse('authetication required')
 
         stored_session = load_session(sessionid)
 
         if stored_session is not None and stored_session['sessionid'] == sessionid:
             username = stored_session['username']
             return fun(*args, **kwargs)
-        return render_template('login.html', title='B2S - Login', message='Invalid session!')
+        return jresponse('Invalid session', type='error')
     return wrapper
 
 @app.route('/')
 def index():
     try:
         sessionid = session['sessionid']
-        return redirect('/home'), 302
+        return redirect('/home', 302)
     except:
         pass
-    return render_template('index.html', title='B2S')
-
-@app.route('/login', methods=['GET'])
-def login():
-    try:
-        sessionid = session['sessionid']
-        return redirect('/home'), 302
-    except:
-        pass
-    return render_template('login.html', title='B2S - Login')
+    return jresponse('working', type='status')
 
 @app.route('/login', methods=['POST'])
 def authenticate():
@@ -55,11 +49,12 @@ def authenticate():
         if hashed_password == pwdhash:
             sessionid = str(binascii.hexlify(os.urandom(24)).decode())
             store_session(username, sessionid)
-            response = make_response(redirect('home', 302))
-            session['sessionid'] = sessionid
+            response = make_response(jresponse('login successful'))
+
+            response.set_cookie('sessionid', value=sessionid, secure=True, httponly=True)
             return response
 
-    return render_template('login.html', title='B2S - Login', message='Invalid username or password!')
+    return jresponse('Invalid username or password!', type='error')
 
 @app.route('/logout', methods=['GET'])
 @auth_check
@@ -67,7 +62,7 @@ def logout():
     sessionid = session['sessionid']
     remove_session(sessionid)
     session.pop(sessionid, None)
-    return redirect('/'), 302
+    return jresponse('log out successful')
 
 @app.route('/home', methods=['GET'])
 @auth_check
@@ -76,7 +71,12 @@ def home():
     stored_session = load_session(sessionid)
     username = stored_session['username']
     links = [("/profile", "Profile"), ("/appointments", "Appointments"), ("/notifications", "Notifications"), ("/logout", "Log out")]
-    return render_template('home.html', title='B2S - home', username=username, links=links)
+    return jsonify(links)
+
+def insert_non_empty_in_dict(d, l):
+    for i,j in l:
+        if j is not None and len(j) > 0:
+            d[i]=j
 
 #All
 @app.route('/profile', methods=['GET'])
@@ -84,23 +84,17 @@ def home():
 def get_profile():
     stored_session = load_session(session['sessionid'])
     user = load_user(stored_session['username'])
-    return render_template('profile.html', profile=user['profile'])
+    return jsonify(user['profile'])
 
-@app.route('/profile/edit', methods=['GET'])
+@app.route('/profile/<username>', methods=['GET'])
 @auth_check
-def get_profile_edit():
-    stored_session = load_session(session['sessionid'])
-    user = load_user(stored_session['username'])
-    return render_template('profile_edit.html', profile=user['profile'], is_admin=True)
+def get_public_profile(username):
+    user = load_user(username)
+    return jsonify(user['profile'])
 
-def insert_non_empty_in_dict(d, l):
-    for i,j in l:
-        if j is not None and len(j) > 0:
-            d[i]=j
-
-@app.route('/profile/edit', methods=['POST'])
+@app.route('/edit/profile/', methods=['PUT'])
 @auth_check
-def post_profile_edit():
+def put_edit_profile():
     stored_session = load_session(session['sessionid'])
     user = load_user(stored_session['username'])
     username = user['username']
@@ -117,15 +111,28 @@ def post_profile_edit():
         print (username, data)
         update_user_profile(username, data)
     except:
-        return render_template('profile_edit.html', profile=user['profile'], message='Input error', is_admin=True)
+        return jsonify('profile_edit.html', profile=user['profile'], message='Input error', is_admin=True)
 
-    return redirect('/profile', 302)
+    return jresponse('profile updated')
 
-@app.route('/profile/<username>', methods=['GET'])
+@app.route('/edit/profile/<username>', methods=['PUT'])
 @auth_check
-def get_public_profile(username):
-    user = load_user(username)
-    return render_template('public_profile.html', profile=user['profile'])
+def put_edit_user_profile(username):
+    is_admin = True
+    try:
+        data = {}
+
+        if(is_admin):
+            insert_non_empty_in_dict(data, [(x,request.form[x]) for x in ['name', 'surname', 'birthdate']])
+
+        insert_non_empty_in_dict(data, [(x,request.form[x]) for x in ['address', 'email', 'phone']])
+
+        print (username, data)
+        update_user_profile(username, data)
+    except:
+        return jsonify('profile_edit.html', profile=user['profile'], message='Input error', is_admin=True)
+
+    return jresponse('profile updated')
 
 @app.route('/appointments', methods=['GET'])
 @auth_check
@@ -133,12 +140,7 @@ def get_appointments():
     stored_session = load_session(session['sessionid'])
     user = load_user(stored_session['username'])
     appointments = load_appointments(user['profile']['email'])
-    return render_template('appointments.html', appointments=appointments)
-
-@app.route('/appointment/form', methods=['GET'])
-@auth_check
-def get_appointment_form():
-    return render_template('appointment_form.html')
+    return jsonify(appointments)
 
 @app.route('/appointment', methods=['POST'])
 @auth_check
@@ -148,7 +150,7 @@ def post_appointment():
     user = load_user(stored_session['username'])
     store_appointment(sender=user['profile']['email'], receiver=data['receiver'],
                       date=data['date'], topic=data['topic'], time=data['time'])
-    return redirect('/home'), 302
+    return jresponse('appointment posted correctly')
 
 @app.route('/appointment/<id>', methods=['GET'])
 @auth_check
@@ -157,255 +159,255 @@ def get_appointment(id):
     user = load_user(stored_session['username'])
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
     can_edit = user['profile']['email'] == appointment['sender']
-    return render_template('appointment.html', appointment=appointment, can_edit=can_edit)
+    return jsonify(appointment)
 
-@app.route('/appointment/edit/<id>', methods=['GET'])
+@app.route('/edit/appointment/<id>', methods=['GET'])
 @auth_check
 def get_appointment_edit(id):
     stored_session = load_session(session['sessionid'])
     user = load_user(stored_session['username'])
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
-    return render_template('appointment_form.html', appointment=appointment)
+    return jsonify(appointment)
 
 @app.route('/appointment/<id>', methods=['PUT'])
 @auth_check
 def put_appointment(id):
-    return render_template('appointment.html')
+    return jresponse('appointment updated')
 
 @app.route('/appointment/<id>', methods=['DELETE'])
 @auth_check
 def delete_appointment(id):
-    return render_template('appointment.html')
+    return jsonify('appointment deleted')
 
 @app.route('/notifications', methods=['GET'])
 @auth_check
 def get_notifications():
-    return render_template('notifications.html')
+    return jsonify('notifications.html')
 
 @app.route('/notification/<id>', methods=['GET'])
 @auth_check
 def get_notification(id):
-    return render_template('notification.html')
+    return jsonify('notification.html')
 
 #Parents
 @app.route('/children', methods=['GET'])
 @auth_check
 def get_children():
-    return render_template('children.html')
+    return jsonify('children.html')
 
 @app.route('/child/<id>/profile', methods=['GET'])
 @auth_check
 def get_child_profile(id):
-    return render_template('child.html')
+    return jsonify('child.html')
 
 @app.route('/child/<id>/profile', methods=['PUT'])
 @auth_check
 def put_child_profile(id):
-    return render_template('child.html')
+    return jsonify('child.html')
 
 @app.route('/child/<id>/grades', methods=['GET'])
 @auth_check
 def get_child_grades(id):
-    return render_template('child.html')
+    return jsonify('child.html')
 
 @app.route('/child/<id>/classes', methods=['GET'])
 @auth_check
 def get_child_classes(id):
-    return render_template('child.html')
+    return jsonify('child.html')
 
 @app.route('/payments/all', methods=['GET'])
 @auth_check
 def get_payments_all():
-    return render_template('payments.html')
+    return jsonify('payments.html')
 
 @app.route('/payments/history', methods=['GET'])
 @auth_check
 def get_payments_history():
-    return render_template('payments.html')
+    return jsonify('payments.html')
 
 @app.route('/payments/due', methods=['GET'])
 @auth_check
 def get_payments_due():
-    return render_template('payments.html')
+    return jsonify('payments.html')
 
 @app.route('/payment/<id>', methods=['GET'])
 @auth_check
 def get_payment(id):
-    return render_template('payment.html')
+    return jsonify('payment.html')
 
 @app.route('/payment/<id>', methods=['POST'])
 @auth_check
 def post_payment(id):
-    return render_template('payment.html')
+    return jsonify('payment.html')
 
 #Teachers
 @app.route('/classes', methods=['GET'])
 @auth_check
 def get_classes():
-    return render_template('classes.html')
+    return jsonify('classes.html')
 
 @app.route('/class/<id>', methods=['GET'])
 @auth_check
 def get_class(id):
-    return render_template('class.html')
+    return jsonify('class.html')
 
 @app.route('/class/<id>/grades', methods=['GET'])
 @auth_check
 def get_class_grades(id):
-    return render_template('class.html')
+    return jsonify('class.html')
 
 @app.route('/class/<id>/grade', methods=['POST'])
 @auth_check
 def post_class_grade(id):
-    return render_template('class.html')
+    return jsonify('class.html')
 
 @app.route('/class/<class_id>/grade/<grade_id>', methods=['PUT'])
 @auth_check
 def put_class_grade(class_id, grade_id):
-    return render_template('class.html')
+    return jsonify('class.html')
 
 @app.route('/grade/<class_id>/grade/<grade_id>', methods=['DELETE'])
 @auth_check
 def delete_grade_grade(class_id, grade_id):
-    return render_template('grade.html')
+    return jsonify('grade.html')
 
 #Admins
 @app.route('/users', methods=['GET'])
 @auth_check
 def get_users():
-    return render_template('users.html')
+    return jsonify('users.html')
 
 @app.route('/user', methods=['POST'])
 @auth_check
 def post_user():
-    return render_template('user.html')
+    return jsonify('user.html')
 
 @app.route('/user/<id>', methods=['GET'])
 @auth_check
 def get_user(id):
-    return render_template('user.html')
+    return jsonify('user.html')
 
 @app.route('/user/<id>', methods=['PUT'])
 @auth_check
 def put_user(id):
-    return render_template('user.html')
+    return jsonify('user.html')
 
 @app.route('/user/<id>', methods=['DELETE'])
 @auth_check
 def delete_user(id):
-    return render_template('user.html')
+    return jsonify('user.html')
 
 # @app.route('/classes', methods=['GET'])
 # @auth_check
 # def get_classes():
-#     return render_template('classes.html')
+#     return jsonify('classes.html')
 
 @app.route('/class', methods=['POST'])
 @auth_check
 def post_class():
-    return render_template('class.html')
+    return jsonify('class.html')
 
 # @app.route('/class/<id>', methods=['GET'])
 # @auth_check
 # def get_class(id):
-#     return render_template('class.html')
+#     return jsonify('class.html')
 
 @app.route('/class/<id>', methods=['PUT'])
 @auth_check
 def put_class(id):
-    return render_template('class.html')
+    return jsonify('class.html')
 
 @app.route('/class/<id>', methods=['DELETE'])
 @auth_check
 def delete_class(id):
-    return render_template('class.html')
+    return jsonify('class.html')
 
 @app.route('/teachers', methods=['GET'])
 @auth_check
 def get_teachers():
-    return render_template('teachers.html')
+    return jsonify('teachers.html')
 
 @app.route('/students', methods=['GET'])
 @auth_check
 def get_students():
-    return render_template('students.html')
+    return jsonify('students.html')
 
 @app.route('/admins', methods=['GET'])
 @auth_check
 def get_admins():
-    return render_template('admins.html')
+    return jsonify('admins.html')
 
 @app.route('/parents', methods=['GET'])
 @auth_check
 def get_parents():
-    return render_template('parents.html')
+    return jsonify('parents.html')
 
 @app.route('/parent/<parent_id>/children', methods=['GET'])
 @auth_check
 def get_parent_children(parent_id):
-    return render_template('parent.html')
+    return jsonify('parent.html')
 
 @app.route('/parent/<parent_id>/child', methods=['POST'])
 @auth_check
 def post_parent_child(parent_id):
-    return render_template('parent.html')
+    return jsonify('parent.html')
 
 @app.route('/parent/<parent_id>/child/<id>', methods=['GET'])
 @auth_check
 def get_parent_child(parent_id, id):
-    return render_template('parent.html')
+    return jsonify('parent.html')
 
 @app.route('/parent/<parent_id>/child/<id>', methods=['PUT'])
 @auth_check
 def put_parent_child(parent_id, id):
-    return render_template('parent.html')
+    return jsonify('parent.html')
 
 @app.route('/parent/<parent_id>/child/<id>', methods=['DELETE'])
 @auth_check
 def delete_parent_child(parent_id, id):
-    return render_template('parent.html')
+    return jsonify('parent.html')
 
 @app.route('/teacher/<teacher_id>/class', methods=['POST'])
 @auth_check
 def post_teacher_class(teacher_id):
-    return render_template('teacher.html')
+    return jsonify('teacher.html')
 
 @app.route('/student/<student_id>/class', methods=['POST'])
 @auth_check
 def post_student_class(student_id):
-    return render_template('student.html')
+    return jsonify('student.html')
 
 @app.route('/student/<student_id>/payments', methods=['GET'])
 @auth_check
 def get_student_payments(student_id):
-    return render_template('student.html')
+    return jsonify('student.html')
 
 @app.route('/student/<student_id>/payment', methods=['POST'])
 @auth_check
 def post_student_payment(student_id):
-    return render_template('student.html')
+    return jsonify('student.html')
 
 @app.route('/student/<student_id>/payment/<id>', methods=['GET'])
 @auth_check
 def get_student_payment(student_id, id):
-    return render_template('student.html')
+    return jsonify('student.html')
 
 @app.route('/student/<student_id>/payment/<id>', methods=['PUT'])
 @auth_check
 def put_student_payment(student_id, id):
-    return render_template('student.html')
+    return jsonify('student.html')
 
 @app.route('/student/<student_id>/payment/<id>', methods=['DELETE'])
 @auth_check
 def delete_student_payment(student_id, id):
-    return render_template('student.html')
+    return jsonify('student.html')
 
 @app.route('/notification', methods=['POST'])
 @auth_check
 def post_notification():
-    return render_template('notification.html')
+    return jsonify('notification.html')
 
 @app.route('/notification/<user_id>', methods=['POST'])
 @auth_check
 def post_notification_to_user(user_id):
-    return render_template('notification.html')
+    return jsonify('notification.html')
