@@ -27,11 +27,6 @@ def auth_check(fun):
 
 @app.route('/')
 def index():
-    try:
-        sessionid = session['sessionid']
-        return redirect('/home', 302)
-    except:
-        pass
     return jresponse('working', type='status')
 
 @app.route('/login', methods=['POST'])
@@ -59,7 +54,7 @@ def authenticate():
 @app.route('/logout', methods=['GET'])
 @auth_check
 def logout():
-    sessionid = session['sessionid']
+    sessionid = request.cookies['sessionid']
     remove_session(sessionid)
     session.pop(sessionid, None)
     return jresponse('log out successful')
@@ -67,7 +62,7 @@ def logout():
 @app.route('/home', methods=['GET'])
 @auth_check
 def home():
-    sessionid = session['sessionid']
+    sessionid = request.cookies['sessionid']
     stored_session = load_session(sessionid)
     username = stored_session['username']
     links = [("/profile", "Profile"), ("/appointments", "Appointments"), ("/notifications", "Notifications"), ("/logout", "Log out")]
@@ -82,7 +77,7 @@ def insert_non_empty_in_dict(d, l):
 @app.route('/profile', methods=['GET'])
 @auth_check
 def get_profile():
-    stored_session = load_session(session['sessionid'])
+    stored_session = load_session(request.cookies['sessionid'])
     user = load_user(stored_session['username'])
     return jsonify(user['profile'])
 
@@ -95,7 +90,7 @@ def get_public_profile(username):
 @app.route('/edit/profile/', methods=['PUT'])
 @auth_check
 def put_edit_profile():
-    stored_session = load_session(session['sessionid'])
+    stored_session = load_session(request.cookies['sessionid'])
     user = load_user(stored_session['username'])
     username = user['username']
     is_admin = True
@@ -137,7 +132,7 @@ def put_edit_user_profile(username):
 @app.route('/appointments', methods=['GET'])
 @auth_check
 def get_appointments():
-    stored_session = load_session(session['sessionid'])
+    stored_session = load_session(request.cookies['sessionid'])
     user = load_user(stored_session['username'])
     appointments = load_appointments(user['profile']['email'])
     return jsonify(appointments)
@@ -146,7 +141,7 @@ def get_appointments():
 @auth_check
 def post_appointment():
     data = request.form
-    stored_session = load_session(session['sessionid'])
+    stored_session = load_session(request.cookies['sessionid'])
     user = load_user(stored_session['username'])
     store_appointment(sender=user['profile']['email'], receiver=data['receiver'],
                       date=data['date'], topic=data['topic'], time=data['time'])
@@ -155,7 +150,7 @@ def post_appointment():
 @app.route('/appointment/<id>', methods=['GET'])
 @auth_check
 def get_appointment(id):
-    stored_session = load_session(session['sessionid'])
+    stored_session = load_session(request.cookies['sessionid'])
     user = load_user(stored_session['username'])
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
     can_edit = user['profile']['email'] == appointment['sender']
@@ -164,7 +159,7 @@ def get_appointment(id):
 @app.route('/edit/appointment/<id>', methods=['GET'])
 @auth_check
 def get_appointment_edit(id):
-    stored_session = load_session(session['sessionid'])
+    stored_session = load_session(request.cookies['sessionid'])
     user = load_user(stored_session['username'])
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
     return jsonify(appointment)
