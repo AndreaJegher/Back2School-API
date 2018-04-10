@@ -77,5 +77,5 @@ def edit_appointment(number, sender, receiver, date, topic, time):
         {'$set' : {'sender':sender, 'receiver':receiver, 'date':date, 'time':time, 'topic':topic}}
     )
 
-def remove_appointment(number, sender):
+def remove_appointment(number):
     appointments.find_one_and_delete({'number':number})
