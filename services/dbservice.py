@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING
 
 client = MongoClient('localhost', 27017)
 db = client.back2school
@@ -10,6 +10,9 @@ payments = db.payments
 sessions = db.sessions
 appointments = db.appointments
 notifications   = db.notifications
+
+users.create_index([('username', ASCENDING)], unique=True)
+users.create_index([('profiel.email', ASCENDING)], unique=True)
 
 def getNextSequence(collection):
     cursor = collection.find({'sequence':{'$gt':-1}})
