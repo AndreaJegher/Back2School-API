@@ -9,6 +9,10 @@ from services.dbservice import *
 def jresponse(s, type='message'):
     return jsonify({type:s})
 
+def get_user_from_session(sessionid):
+    stored_session = load_session(sessionid)
+    return load_user(stored_session['username'])
+
 def auth_check(fun):
     @wraps(fun)
     def wrapper(*args, **kwargs):
@@ -77,8 +81,8 @@ def insert_non_empty_in_dict(d, l):
 @app.route('/profile', methods=['GET'])
 @auth_check
 def get_profile():
-    stored_session = load_session(request.cookies['sessionid'])
-    user = load_user(stored_session['username'])
+    user = get_user_from_session(request.cookies['sessionid'])
+
     return jsonify(user['profile'])
 
 @app.route('/profile/<username>', methods=['GET'])
@@ -90,8 +94,8 @@ def get_public_profile(username):
 @app.route('/edit/profile/', methods=['PUT'])
 @auth_check
 def put_edit_profile():
-    stored_session = load_session(request.cookies['sessionid'])
-    user = load_user(stored_session['username'])
+    user = get_user_from_session(request.cookies['sessionid'])
+
     username = user['username']
     is_admin = True
 
@@ -132,8 +136,8 @@ def put_edit_user_profile(username):
 @app.route('/appointments', methods=['GET'])
 @auth_check
 def get_appointments():
-    stored_session = load_session(request.cookies['sessionid'])
-    user = load_user(stored_session['username'])
+    user = get_user_from_session(request.cookies['sessionid'])
+
     appointments = load_appointments(user['profile']['email'])
     if appointments is None:
         return jresponse('no appointments found'), 404
@@ -143,8 +147,8 @@ def get_appointments():
 @auth_check
 def post_appointment():
     data = request.form
-    stored_session = load_session(request.cookies['sessionid'])
-    user = load_user(stored_session['username'])
+    user = get_user_from_session(request.cookies['sessionid'])
+
     store_appointment(sender=user['profile']['email'], receiver=data['receiver'],
                       date=data['date'], topic=data['topic'], time=data['time'])
     return jresponse('appointment posted correctly')
@@ -152,8 +156,8 @@ def post_appointment():
 @app.route('/appointment/<id>', methods=['GET'])
 @auth_check
 def get_appointment(id):
-    stored_session = load_session(request.cookies['sessionid'])
-    user = load_user(stored_session['username'])
+    user = get_user_from_session(request.cookies['sessionid'])
+
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
     if appointment is None:
         return jresponse('appointment not found', 404)
@@ -162,8 +166,8 @@ def get_appointment(id):
 @app.route('/edit/appointment/<id>', methods=['PUT'])
 @auth_check
 def put_appointment(id):
-    stored_session = load_session(request.cookies['sessionid'])
-    user = load_user(stored_session['username'])
+    user = get_user_from_session(request.cookies['sessionid'])
+
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
     if appointment is None:
         return jresponse('you cannot edit this appointment', type='error')
@@ -174,8 +178,8 @@ def put_appointment(id):
 @app.route('/appointment/<id>', methods=['DELETE'])
 @auth_check
 def delete_appointment(id):
-    stored_session = load_session(request.cookies['sessionid'])
-    user = load_user(stored_session['username'])
+    user = get_user_from_session(request.cookies['sessionid'])
+
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
     if appointment is None or user['profile']['email'] != appointment['sender']:
         return jresponse('you cannot remove this appointment', type='error')
@@ -199,9 +203,13 @@ def get_notification(id):
     return jsonify(notification)
 
 #Parents
-@app.route('/children', methods=['GET'])
+@app.route('/childrens', methods=['GET'])
 @auth_check
 def get_children():
+    user = get_user_from_session(request.cookies['sessionid'])
+    childrens = load_children(user)
+    if childrens is not None:
+        return jresponse('No children found'), 404
     return jsonify('children.html')
 
 @app.route('/child/<id>/profile', methods=['GET'])

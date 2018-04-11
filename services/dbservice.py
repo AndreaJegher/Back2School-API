@@ -12,7 +12,7 @@ appointments = db.appointments
 notifications   = db.notifications
 
 users.create_index([('username', ASCENDING)], unique=True)
-users.create_index([('profiel.email', ASCENDING)], unique=True)
+users.create_index([('profile.email', ASCENDING)], unique=True)
 
 def getNextSequence(collection):
     cursor = collection.find({'sequence':{'$gt':-1}})
