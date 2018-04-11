@@ -82,7 +82,6 @@ def insert_non_empty_in_dict(d, l):
 @auth_check
 def get_profile():
     user = get_user_from_session(request.cookies['sessionid'])
-
     return jsonify(user['profile'])
 
 @app.route('/profile/<username>', methods=['GET'])
@@ -207,55 +206,98 @@ def get_notification(id):
 @auth_check
 def get_children():
     user = get_user_from_session(request.cookies['sessionid'])
-    childrens = load_children(user)
-    if childrens is not None:
+    children = load_children(user)
+    if children is not None:
         return jresponse('No children found'), 404
-    return jsonify('children.html')
+    return jsonify(children)
 
 @app.route('/child/<id>/profile', methods=['GET'])
 @auth_check
 def get_child_profile(id):
-    return jsonify('child.html')
+    user = get_user_from_session(request.cookies['sessionid'])
+    child = load_child(user, id)
+    if child is not None:
+        return jresponse('No child found'), 404
+    return jsonify(child['profile'])
 
 @app.route('/child/<id>/profile', methods=['PUT'])
 @auth_check
 def put_child_profile(id):
-    return jsonify('child.html')
+    user = get_user_from_session(request.cookies['sessionid'])
+    child = load_child(user, id)
+    try:
+        data = {}
+
+        insert_non_empty_in_dict(data, [(x,request.form[x]) for x in ['address', 'email', 'phone']])
+
+        update_user_profile(child['username'], data)
+    except:
+        return jresponse('Input error', type='error')
+
+    return jresponse('profile updated')
 
 @app.route('/child/<id>/grades', methods=['GET'])
 @auth_check
 def get_child_grades(id):
-    return jsonify('child.html')
+    user = get_user_from_session(request.cookies['sessionid'])
+    grades = load_child_grades(user, id)
+    if grades is not None:
+        return jresponse('No grades found'), 404
+    return jsonify([x for x in grades])
 
 @app.route('/child/<id>/classes', methods=['GET'])
 @auth_check
 def get_child_classes(id):
-    return jsonify('child.html')
+    user = get_user_from_session(request.cookies['sessionid'])
+    classes = load_child_grades(user, id)
+    if classes is not None:
+        return jresponse('No classes found'), 404
+    return jsonify([x for x in classes])
 
-@app.route('/payments/all', methods=['GET'])
+@app.route('/payments', methods=['GET'])
 @auth_check
 def get_payments_all():
-    return jsonify('payments.html')
+    user = get_user_from_session(request.cookies['sessionid'])
+    payments = load_payments(user)
+    if payments is not None:
+        return jresponse('No payments found'), 404
+    return jsonify([x for x in payments])
 
 @app.route('/payments/history', methods=['GET'])
 @auth_check
 def get_payments_history():
-    return jsonify('payments.html')
+    user = get_user_from_session(request.cookies['sessionid'])
+    payments = load_payments(user, status='paid')
+    if payments is not None:
+        return jresponse('No payments found'), 404
+    return jsonify([x for x in payments])
 
 @app.route('/payments/due', methods=['GET'])
 @auth_check
 def get_payments_due():
-    return jsonify('payments.html')
+    user = get_user_from_session(request.cookies['sessionid'])
+    payments = load_payments(user, status='due')
+    if payments is not None:
+        return jresponse('No payments found'), 404
+    return jsonify([x for x in payments])
 
 @app.route('/payment/<id>', methods=['GET'])
 @auth_check
 def get_payment(id):
-    return jsonify('payment.html')
+    user = get_user_from_session(request.cookies['sessionid'])
+    payment = load_payment(user, id)
+    if payment is not None:
+        return jresponse('No payment found'), 404
+    return jsonify(payment)
 
 @app.route('/payment/<id>', methods=['POST'])
 @auth_check
 def post_payment(id):
-    return jsonify('payment.html')
+    user = get_user_from_session(request.cookies['sessionid'])
+    payment = pay_payment(user, id)
+    if payment is not None:
+        return jresponse('No payment found'), 404
+    return jresponse('payment was successful')
 
 #Teachers
 @app.route('/classes', methods=['GET'])
