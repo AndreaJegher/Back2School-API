@@ -10,20 +10,21 @@ payments = db.payments
 sessions = db.sessions
 appointments = db.appointments
 notifications   = db.notifications
+sequences = db.sequences
 
 users.create_index([('username', ASCENDING)], unique=True)
 users.create_index([('profile.email', ASCENDING)], unique=True)
 
 def getNextSequence(collection):
-    cursor = collection.find({'sequence':{'$gt':-1}})
+    cursor = sequences.find({collection:{'$gt':-1}})
     if cursor.count() < 1:
-        collection.insert({'sequence':0})
+        sequences.insert({collection:0})
         return 0
     else:
-        value = cursor.next()['sequence'] + 1
-        collection.find_one_and_update(
-            {'sequence':value-1},
-            {'$set':{'sequence':value+1}}
+        value = cursor.next()[collection] + 1
+        sequences.find_one_and_update(
+            {collection:value-1},
+            {'$set':{collection:value+1}}
         )
         return value
 
@@ -65,7 +66,7 @@ def load_appointments(email):
     return cursor
 
 def store_appointment(sender, receiver, date, topic, time):
-    number = getNextSequence(appointments)
+    number = getNextSequence('appointments')
     appointments.insert({'number':number, 'sender':sender, 'receiver':receiver, 'date':date, 'time':time, 'topic':topic})
 
 def load_appointment(number, email):
