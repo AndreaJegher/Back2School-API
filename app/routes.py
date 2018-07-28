@@ -93,11 +93,11 @@ def get_profile():
     user = get_user_from_session(request.cookies['sessionid'])
     return jsonify(user['profile'])
 
-@app.route('/profile/<username>', methods=['GET'])
-@auth_check
-def get_public_profile(username):
-    user = load_user(username)
-    return jsonify(user['profile'])
+# @app.route('/profile/<username>', methods=['GET'])
+# @auth_check
+# def get_public_profile(username):
+#     user = load_user(username)
+#     return jsonify(user['profile'])
 
 @app.route('/edit/profile/', methods=['PUT'])
 @auth_check
@@ -395,13 +395,25 @@ def delete_grade_grade(class_id, grade_id):
 @auth_check
 @permission_check()
 def get_users():
-    return jsonify('users.html')
+    users = get_users()
+    if users is None:
+      return jresponse('No user found', type='error')
+    return jsonify(users)
 
 @app.route('/user', methods=['POST'])
 @auth_check
 @permission_check()
 def post_user():
-    return jsonify('user.html')
+    try:
+      username = request.form["username"]
+      email    = request.form["email"]
+      password = request.form["password"]
+    except:
+      return jresponse('Error in form arguments', type='error')
+    salt = str(binascii.hexlify(os.urandom(10)).decode())
+    hashed_password = hashlib.sha256(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
+    insert_user(username, hashed_password, salt)
+    return jresponse('User created successfuly')
 
 @app.route('/user/<id>', methods=['GET'])
 @auth_check

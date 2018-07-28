@@ -13,7 +13,12 @@ notifications   = db.notifications
 sequences = db.sequences
 
 users.create_index([('username', ASCENDING)], unique=True)
+users.create_index([('number', ASCENDING)], unique=True)
 users.create_index([('profile.email', ASCENDING)], unique=True)
+
+classes.create_index([('number', ASCENDING)], unique=True)
+appointments.create_index([('number', ASCENDING)], unique=True)
+notifications.create_index([('number', ASCENDING)], unique=True)
 
 def getNextSequence(collection):
     cursor = sequences.find({collection:{'$gt':-1}})
@@ -28,8 +33,8 @@ def getNextSequence(collection):
         )
         return value
 
-def load_user(username):
-    cursor = users.find({'username':username})
+def load_user(number):
+    cursor = users.find({'number':number})
     if cursor.count() < 1:
         return None
     return cursor.next()
