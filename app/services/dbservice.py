@@ -14,7 +14,7 @@ sequences = db.sequences
 
 users.create_index([('username', ASCENDING)], unique=True)
 users.create_index([('number', ASCENDING)], unique=True)
-users.create_index([('profile.email', ASCENDING)], unique=True)
+users.create_index([('profile.email', ASCENDING)], unique=True, sparse=True)
 
 classes.create_index([('number', ASCENDING)], unique=True)
 appointments.create_index([('number', ASCENDING)], unique=True)
@@ -34,19 +34,45 @@ def getNextSequence(collection):
         return value
 
 def load_user_by_id(id):
-    cursor = users.find({'number':id})
+    try:
+        id = int(id)
+    except:
+      return None
+
+    cursor = users.find({'number':id}, {'_id':0})
     if cursor.count() < 1:
         return None
     return cursor.next()
+
+def remove_user(id):
+    try:
+        id = int(id)
+    except:
+      return False
+    users.remove({'number':id})
+    return True
 
 def load_user(username):
-    cursor = users.find({'username':username})
+    cursor = users.find({'username':username}, {'_id':0})
     if cursor.count() < 1:
         return None
     return cursor.next()
 
-def insert_user(username, pwdhash, salt, type):
-    users.insert({'username':username, 'pwdhash':pwdhash, 'salt':salt, 'type':type})
+def load_all_users():
+    cursor = users.find({}, {'_id':0})
+    if cursor.count() < 1:
+        return None
+
+    return list(cursor)
+
+def insert_user(username, data):
+    data ['number']    = getNextSequence('users')
+    data ['username']  = username
+    users.find_one_and_update(
+        {'username':username},
+        {'$set':{key: data[key] for key in data}},
+        upsert=True
+    )
 
 def update_user_profile(username, data):
     users.find_one_and_update(

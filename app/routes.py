@@ -416,7 +416,7 @@ def delete_grade_grade(class_id, grade_id):
 @auth_check
 @admin_check
 def get_users():
-    users = get_users()
+    users = load_all_users()
     if users is None:
       return jresponse('No user found', type='error')
     return jsonify(users)
@@ -427,32 +427,73 @@ def get_users():
 def post_user():
     try:
       username = request.form["username"]
-      email    = request.form["email"]
+      user = load_user(username)
+      if user is not None:
+          return jresponse('username already exists', type='error')
       password = request.form["password"]
-    except:
-      return jresponse('Error in form arguments', type='error')
-    salt = str(binascii.hexlify(os.urandom(10)).decode())
-    hashed_password = hashlib.sha256(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
-    insert_user(username, hashed_password, salt)
+      type     = request.form["type"]
+      salt = str(binascii.hexlify(os.urandom(10)).decode())
+      pwdhash = hashlib.sha256(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
+      insert_user(username, {'pwdhash':pwdhash, 'salt':salt, 'type':type})
+    except Exception as e:
+      return jresponse('Error creating user: '+ str(e.args), type='error')
     return jresponse('User created successfuly')
 
 @app.route('/user/<id>', methods=['GET'])
 @auth_check
 @admin_check
 def get_user(id):
-    return jsonify('user.html')
+    user = load_user_by_id(id)
+    if user is None:
+      return jresponse('User not found', type='error')
+    return jsonify(user)
 
 @app.route('/user/<id>', methods=['PUT'])
 @auth_check
 @admin_check
 def put_user(id):
-    return jsonify('user.html')
+    user = load_user_by_id(id)
+    if user is None:
+        return jresponse('No user found', type='error')
+
+    try:
+      username = request.form["username"]
+      password = request.form["password"]
+      type     = request.form["type"]
+      salt = str(binascii.hexlify(os.urandom(10)).decode())
+      pwdhash = hashlib.sha256(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
+      insert_user(username, {'pwdhash':pwdhash, 'salt':salt, 'type':type})
+    except Exception as e:
+      return jresponse('Error creating user: '+ str(e.args), type='error')
+    return jresponse('User updated successfuly')
+
+@app.route('/user/<id>/profile', methods=['PUT'])
+@auth_check
+@admin_check
+def put_user_profile(id):
+    user = load_user_by_id(id)
+    if user is None:
+        return jresponse('No user found', type='error')
+    try:
+      update_user_profile(user['username'], request.form)
+
+    except Exception as e:
+      return jresponse('Error updating profile: '+ str(e.args), type='error')
+    return jresponse('User created successfuly')
 
 @app.route('/user/<id>', methods=['DELETE'])
 @auth_check
 @admin_check
 def delete_user(id):
-    return jsonify('user.html')
+
+    users = load_user_by_id(id)
+    if users is None:
+      return jresponse('No user found', type='error')
+
+    if remove_user(id):
+        return jresponse('succes', type='message')
+    else:
+        return jresponse('failed', type='error')
 
 # @app.route('/classes', methods=['GET'])
 # @auth_check
