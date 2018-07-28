@@ -1,0 +1,134 @@
+{
+	"info": {
+		"_postman_id": "ae2fb8c7-6e20-4e90-8475-46e2d7875e95",
+		"name": "back2school",
+		"description": "Back to school api showcase",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"_postman_id": "3ea483d4-4b48-4e78-884a-4a91eaa72805",
+			"name": "parents",
+			"item": [
+				{
+					"_postman_id": "c492a203-19b0-43e4-83cb-354e49b45291",
+					"name": "children",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "username",
+									"value": "admin",
+									"sessionValue": "admin",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "super_secret_password",
+									"sessionValue": "super_secret_password",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "localhost:5000/children",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"children"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"_postman_id": "9ece5e36-8194-43bf-a1fc-4ef7382fb822",
+			"name": "teachers",
+			"item": []
+		},
+		{
+			"_postman_id": "3591f618-8ad9-42e9-8679-3f2a7fc7736e",
+			"name": "admins",
+			"item": []
+		},
+		{
+			"_postman_id": "27af9401-7f07-4d3e-8a1b-29049b7304e7",
+			"name": "profile",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "username",
+							"value": "admin",
+							"sessionValue": "admin",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "super_secret_password",
+							"sessionValue": "super_secret_password",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/profile",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"profile"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"_postman_id": "b3fd8fe6-3185-421b-bb23-5f7cd03d4737",
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "username",
+							"value": "admin",
+							"sessionValue": "admin",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "super_secret_password",
+							"sessionValue": "super_secret_password",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/login",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
