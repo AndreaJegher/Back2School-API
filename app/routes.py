@@ -4,7 +4,10 @@ import hashlib, uuid
 import os
 import binascii
 from functools import wraps
-from services.dbservice import *
+import sys
+
+sys.path.insert(0, 'app/services')
+from dbservice import *
 
 def jresponse(s, type='message'):
     return jsonify({type:s})
@@ -13,14 +16,32 @@ def get_user_from_session(sessionid):
     stored_session = load_session(sessionid)
     return load_user(stored_session['username'])
 
-def permission_check(fun, types=['admin']):
+def admin_check(fun):
     @wraps(fun)
-    def wrapper(*args, **kwargs):
+    def wrapped(*args, **kwargs):
         user = get_user_from_session(request.cookies['sessionid'])
-        if user['type'] in types:
+        if user['type'] == 'admin':
             return fun(*args, **kwargs)
-        return jresponse('Permission denied', type='error'), 401
-    return wrapper
+        return jresponse('Permission denied', type='error'), 403
+    return wrapped
+
+def parent_check(fun):
+    @wraps(fun)
+    def wrapped(*args, **kwargs):
+        user = get_user_from_session(request.cookies['sessionid'])
+        if user['type'] == 'parent':
+            return fun(*args, **kwargs)
+        return jresponse('Permission denied', type='error'), 403
+    return wrapped
+
+def teacher_check(fun):
+    @wraps(fun)
+    def wrapped(*args, **kwargs):
+        user = get_user_from_session(request.cookies['sessionid'])
+        if user['type'] == 'teacher':
+            return fun(*args, **kwargs)
+        return jresponse('Permission denied', type='error'), 403
+    return wrapped
 
 def auth_check(fun):
     @wraps(fun)
@@ -210,9 +231,9 @@ def get_notification(id):
     return jsonify(notification)
 
 #Parents
-@app.route('/childrens', methods=['GET'])
+@app.route('/children', methods=['GET'])
 @auth_check
-@permission_check(type=['parent'])
+@parent_check
 def get_children():
     user = get_user_from_session(request.cookies['sessionid'])
     children = load_children(user)
@@ -222,7 +243,7 @@ def get_children():
 
 @app.route('/child/<id>/profile', methods=['GET'])
 @auth_check
-@permission_check(type=['parent'])
+@parent_check
 def get_child_profile(id):
     user = get_user_from_session(request.cookies['sessionid'])
     child = load_child(user, id)
@@ -232,7 +253,7 @@ def get_child_profile(id):
 
 @app.route('/child/<id>/profile', methods=['PUT'])
 @auth_check
-@permission_check(type=['parent'])
+@parent_check
 def put_child_profile(id):
     user = get_user_from_session(request.cookies['sessionid'])
     child = load_child(user, id)
@@ -249,7 +270,7 @@ def put_child_profile(id):
 
 @app.route('/child/<id>/grades', methods=['GET'])
 @auth_check
-@permission_check(type=['parent'])
+@parent_check
 def get_child_grades(id):
     user = get_user_from_session(request.cookies['sessionid'])
     grades = load_child_grades(user, id)
@@ -259,7 +280,7 @@ def get_child_grades(id):
 
 @app.route('/child/<id>/classes', methods=['GET'])
 @auth_check
-@permission_check(type=['parent'])
+@parent_check
 def get_child_classes(id):
     user = get_user_from_session(request.cookies['sessionid'])
     classes = load_child_grades(user, id)
@@ -269,7 +290,7 @@ def get_child_classes(id):
 
 @app.route('/payments', methods=['GET'])
 @auth_check
-@permission_check(type=['parent'])
+@parent_check
 def get_payments_all():
     user = get_user_from_session(request.cookies['sessionid'])
     payments = load_payments(user)
@@ -279,7 +300,7 @@ def get_payments_all():
 
 @app.route('/payments/history', methods=['GET'])
 @auth_check
-@permission_check(type=['parent'])
+@parent_check
 def get_payments_history():
     user = get_user_from_session(request.cookies['sessionid'])
     payments = load_payments(user, status='paid')
@@ -289,7 +310,7 @@ def get_payments_history():
 
 @app.route('/payments/due', methods=['GET'])
 @auth_check
-@permission_check(type=['parent'])
+@parent_check
 def get_payments_due():
     user = get_user_from_session(request.cookies['sessionid'])
     payments = load_payments(user, status='due')
@@ -299,7 +320,7 @@ def get_payments_due():
 
 @app.route('/payment/<id>', methods=['GET'])
 @auth_check
-@permission_check(type=['parent'])
+@parent_check
 def get_payment(id):
     user = get_user_from_session(request.cookies['sessionid'])
     payment = load_payment(user, id)
@@ -309,7 +330,7 @@ def get_payment(id):
 
 @app.route('/payment/<id>', methods=['POST'])
 @auth_check
-@permission_check(type=['parent'])
+@parent_check
 def post_payment(id):
     user = get_user_from_session(request.cookies['sessionid'])
     payment = pay_payment(user, id)
@@ -320,7 +341,7 @@ def post_payment(id):
 #Teachers
 @app.route('/classes', methods=['GET'])
 @auth_check
-@permission_check(type=['teacher'])
+@teacher_check
 def get_classes():
     user = get_user_from_session(request.cookies['sessionid'])
     classes = find_classes(user)
@@ -330,7 +351,7 @@ def get_classes():
 
 @app.route('/class/<id>', methods=['GET'])
 @auth_check
-@permission_check(type=['teacher'])
+@teacher_check
 def get_class(id):
     user = get_user_from_session(request.cookies['sessionid'])
     _class = find_class(user, id)
@@ -340,7 +361,7 @@ def get_class(id):
 
 @app.route('/class/<id>/grades', methods=['GET'])
 @auth_check
-@permission_check(type=['teacher'])
+@teacher_check
 def get_class_grades(id):
     user = get_user_from_session(request.cookies['sessionid'])
     _class = find_class(user, id)
@@ -350,7 +371,7 @@ def get_class_grades(id):
 
 @app.route('/class/<id>/grade', methods=['POST'])
 @auth_check
-@permission_check(type=['teacher'])
+@teacher_check
 def post_class_grade(id):
     user = get_user_from_session(request.cookies['sessionid'])
     _class = find_class(user, id)
@@ -364,7 +385,7 @@ def post_class_grade(id):
 
 @app.route('/class/<class_id>/grade/<grade_id>', methods=['PUT'])
 @auth_check
-@permission_check(type=['teacher'])
+@teacher_check
 def put_class_grade(class_id, grade_id):
     user = get_user_from_session(request.cookies['sessionid'])
     _class = find_class(user, class_id)
@@ -378,7 +399,7 @@ def put_class_grade(class_id, grade_id):
 
 @app.route('/grade/<class_id>/grade/<grade_id>', methods=['DELETE'])
 @auth_check
-@permission_check(type=['teacher'])
+@teacher_check
 def delete_grade_grade(class_id, grade_id):
     user = get_user_from_session(request.cookies['sessionid'])
     _class = find_class(user, class_id)
@@ -393,7 +414,7 @@ def delete_grade_grade(class_id, grade_id):
 #Admins
 @app.route('/users', methods=['GET'])
 @auth_check
-@permission_check()
+@admin_check
 def get_users():
     users = get_users()
     if users is None:
@@ -402,7 +423,7 @@ def get_users():
 
 @app.route('/user', methods=['POST'])
 @auth_check
-@permission_check()
+@admin_check
 def post_user():
     try:
       username = request.form["username"]
@@ -417,19 +438,19 @@ def post_user():
 
 @app.route('/user/<id>', methods=['GET'])
 @auth_check
-@permission_check()
+@admin_check
 def get_user(id):
     return jsonify('user.html')
 
 @app.route('/user/<id>', methods=['PUT'])
 @auth_check
-@permission_check()
+@admin_check
 def put_user(id):
     return jsonify('user.html')
 
 @app.route('/user/<id>', methods=['DELETE'])
 @auth_check
-@permission_check()
+@admin_check
 def delete_user(id):
     return jsonify('user.html')
 
@@ -440,7 +461,7 @@ def delete_user(id):
 
 @app.route('/class', methods=['POST'])
 @auth_check
-@permission_check()
+@admin_check
 def post_class():
     return jsonify('class.html')
 
@@ -451,120 +472,120 @@ def post_class():
 
 @app.route('/class/<id>', methods=['PUT'])
 @auth_check
-@permission_check()
+@admin_check
 def put_class(id):
     return jsonify('class.html')
 
 @app.route('/class/<id>', methods=['DELETE'])
 @auth_check
-@permission_check()
+@admin_check
 def delete_class(id):
     return jsonify('class.html')
 
 @app.route('/teachers', methods=['GET'])
 @auth_check
-@permission_check()
+@admin_check
 def get_teachers():
     return jsonify('teachers.html')
 
 @app.route('/students', methods=['GET'])
 @auth_check
-@permission_check()
+@admin_check
 def get_students():
     return jsonify('students.html')
 
 @app.route('/admins', methods=['GET'])
 @auth_check
-@permission_check()
+@admin_check
 def get_admins():
     return jsonify('admins.html')
 
 @app.route('/parents', methods=['GET'])
 @auth_check
-@permission_check()
+@admin_check
 def get_parents():
     return jsonify('parents.html')
 
 @app.route('/parent/<parent_id>/children', methods=['GET'])
 @auth_check
-@permission_check()
+@admin_check
 def get_parent_children(parent_id):
     return jsonify('parent.html')
 
 @app.route('/parent/<parent_id>/child', methods=['POST'])
 @auth_check
-@permission_check()
+@admin_check
 def post_parent_child(parent_id):
     return jsonify('parent.html')
 
 @app.route('/parent/<parent_id>/child/<id>', methods=['GET'])
 @auth_check
-@permission_check()
+@admin_check
 def get_parent_child(parent_id, id):
     return jsonify('parent.html')
 
 @app.route('/parent/<parent_id>/child/<id>', methods=['PUT'])
 @auth_check
-@permission_check()
+@admin_check
 def put_parent_child(parent_id, id):
     return jsonify('parent.html')
 
 @app.route('/parent/<parent_id>/child/<id>', methods=['DELETE'])
 @auth_check
-@permission_check()
+@admin_check
 def delete_parent_child(parent_id, id):
     return jsonify('parent.html')
 
 @app.route('/teacher/<teacher_id>/class', methods=['POST'])
 @auth_check
-@permission_check()
+@admin_check
 def post_teacher_class(teacher_id):
     return jsonify('teacher.html')
 
 @app.route('/student/<student_id>/class', methods=['POST'])
 @auth_check
-@permission_check()
+@admin_check
 def post_student_class(student_id):
     return jsonify('student.html')
 
 @app.route('/student/<student_id>/payments', methods=['GET'])
 @auth_check
-@permission_check()
+@admin_check
 def get_student_payments(student_id):
     return jsonify('student.html')
 
 @app.route('/student/<student_id>/payment', methods=['POST'])
 @auth_check
-@permission_check()
+@admin_check
 def post_student_payment(student_id):
     return jsonify('student.html')
 
 @app.route('/student/<student_id>/payment/<id>', methods=['GET'])
 @auth_check
-@permission_check()
+@admin_check
 def get_student_payment(student_id, id):
     return jsonify('student.html')
 
 @app.route('/student/<student_id>/payment/<id>', methods=['PUT'])
 @auth_check
-@permission_check()
+@admin_check
 def put_student_payment(student_id, id):
     return jsonify('student.html')
 
 @app.route('/student/<student_id>/payment/<id>', methods=['DELETE'])
 @auth_check
-@permission_check()
+@admin_check
 def delete_student_payment(student_id, id):
     return jsonify('student.html')
 
 @app.route('/notification', methods=['POST'])
 @auth_check
-@permission_check()
+@admin_check
 def post_notification():
     return jsonify('notification.html')
 
 @app.route('/notification/<user_id>', methods=['POST'])
 @auth_check
-@permission_check()
+@admin_check
 def post_notification_to_user(user_id):
     return jsonify('notification.html')

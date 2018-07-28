@@ -33,14 +33,20 @@ def getNextSequence(collection):
         )
         return value
 
-def load_user(number):
-    cursor = users.find({'number':number})
+def load_user_by_id(id):
+    cursor = users.find({'number':id})
     if cursor.count() < 1:
         return None
     return cursor.next()
 
-def insert_user(username, pwdhash, salt):
-    users.insert({'username':username, 'pwdhash':pwdhash, 'salt':salt})
+def load_user(username):
+    cursor = users.find({'username':username})
+    if cursor.count() < 1:
+        return None
+    return cursor.next()
+
+def insert_user(username, pwdhash, salt, type):
+    users.insert({'username':username, 'pwdhash':pwdhash, 'salt':salt, 'type':type})
 
 def update_user_profile(username, data):
     users.find_one_and_update(
