@@ -235,8 +235,8 @@ def get_notification(id):
 @auth_check
 @parent_check
 def get_children():
-    user = get_user_from_session(request.cookies['sessionid'])
-    children = load_children(user)
+    username = get_user_from_session(request.cookies['sessionid'])
+    children = load_children(username)
     if children is None:
         return jresponse('No children found'), 404
     return jsonify(children)
@@ -495,21 +495,29 @@ def delete_user(id):
     else:
         return jresponse('failed', type='error')
 
-# @app.route('/classes', methods=['GET'])
-# @auth_check
-# def get_classes():
-#     return jsonify('classes.html')
+@app.route('/classes', methods=['GET'])
+@auth_check
+@admin_check
+def get_all_classes():
+    return jsonify(load_all_classes())
 
 @app.route('/class', methods=['POST'])
 @auth_check
 @admin_check
 def post_class():
-    return jsonify('class.html')
+    try:
+        teacher = request.form['teacher']
+        schedule = request.form['schedule']
+    except:
+        return jresponse('Error', type='error')
 
-# @app.route('/class/<id>', methods=['GET'])
-# @auth_check
-# def get_class(id):
-#     return jsonify('class.html')
+    return jresponse('success')
+
+@app.route('/class/<id>', methods=['GET'])
+@auth_check
+@admin_check
+def get_class_admin(id):
+    return jsonify('class.html')
 
 @app.route('/class/<id>', methods=['PUT'])
 @auth_check

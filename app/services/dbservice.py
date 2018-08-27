@@ -96,6 +96,22 @@ def store_session(username, sessionid):
 def remove_session(sessionid):
     sessions.find_one_and_delete({'sessionid':sessionid})
 
+def load_children(parent):
+    cursor = children.find({'parent':parent})
+    if cursor.count() < 1:
+        return None
+
+    return list(cursor)
+
+def load_child(parent, id):
+    child = load_user_by_id(id)
+    parent = load_user(parent)
+    try:
+        if ( id in parent["profile"]["children"] ):
+            return child["profile"]
+    except:
+        return None
+
 def load_appointments(email):
     cursor = appointments.find({'$or':[{'receiver':email}, {'sender':email}]}, {'_id':0})
     if cursor.count() < 1:
@@ -132,3 +148,13 @@ def load_notification(number):
     if cursor.count() < 1:
         return None
     return cursor
+
+def inser_class(teacher, students, schedule):
+    classes.insert({'number':getNextSequence('classes'), 'teacher':teacher, 'students':[], 'schedule':schedule})
+
+def load_all_classes():
+    cursor = classes.find({}, {'_id':0})
+    if cursor.count() < 1:
+        return None
+
+    return list(cursor)
