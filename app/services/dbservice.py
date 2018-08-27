@@ -157,4 +157,11 @@ def load_all_classes():
     if cursor.count() < 1:
         return None
 
-    return list(cursor)
+    return cursor
+
+def get_class(id, role):
+    cursor = classes.find({"id":id}, {'_id':0})
+    if cursor.count() < 1:
+        return None
+
+    return cursor.next()

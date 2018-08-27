@@ -9,12 +9,17 @@ import sys
 sys.path.insert(0, 'app/services')
 from dbservice import *
 
-def jresponse(s, type='message'):
+def jres(s, type='message'):
     return jsonify({type:s})
 
 def get_user_from_session(sessionid):
     stored_session = load_session(sessionid)
     return load_user(stored_session['username'])
+
+def insert_non_empty_in_dict(d, l):
+    for i,j in l:
+        if j is not None and len(j) > 0:
+            d[i]=j
 
 def admin_check(fun):
     @wraps(fun)
@@ -22,7 +27,7 @@ def admin_check(fun):
         user = get_user_from_session(request.cookies['sessionid'])
         if user['type'] == 'admin':
             return fun(*args, **kwargs)
-        return jresponse('Permission denied', type='error'), 403
+        return jres('Permission denied', type='error'), 403
     return wrapped
 
 def parent_check(fun):
@@ -31,7 +36,7 @@ def parent_check(fun):
         user = get_user_from_session(request.cookies['sessionid'])
         if user['type'] == 'parent':
             return fun(*args, **kwargs)
-        return jresponse('Permission denied', type='error'), 403
+        return jres('Permission denied', type='error'), 403
     return wrapped
 
 def teacher_check(fun):
@@ -40,7 +45,7 @@ def teacher_check(fun):
         user = get_user_from_session(request.cookies['sessionid'])
         if user['type'] == 'teacher':
             return fun(*args, **kwargs)
-        return jresponse('Permission denied', type='error'), 403
+        return jres('Permission denied', type='error'), 403
     return wrapped
 
 def auth_check(fun):
@@ -49,19 +54,19 @@ def auth_check(fun):
         try:
             sessionid = request.cookies['sessionid']
         except:
-            return jresponse('authetication required')
+            return jres('authetication required')
 
         stored_session = load_session(sessionid)
 
         if stored_session is not None and stored_session['sessionid'] == sessionid:
             username = stored_session['username']
             return fun(*args, **kwargs)
-        return jresponse('Invalid session', type='error'), 403
+        return jres('Invalid session', type='error'), 403
     return wrapper
 
 @app.route('/')
 def index():
-    return jresponse('working', type='status')
+    return jres('working', type='status')
 
 @app.route('/login', methods=['POST'])
 def authenticate():
@@ -78,12 +83,12 @@ def authenticate():
         if hashed_password == pwdhash:
             sessionid = str(binascii.hexlify(os.urandom(24)).decode())
             store_session(username, sessionid)
-            response = make_response(jresponse('login successful'))
+            response = make_response(jres('login successful'))
 
             response.set_cookie('sessionid', value=sessionid, httponly=True) # secure=True,
             return response
 
-    return jresponse('Invalid username or password!', type='error')
+    return jres('Invalid username or password!', type='error')
 
 @app.route('/logout', methods=['GET'])
 @auth_check
@@ -91,22 +96,16 @@ def logout():
     sessionid = request.cookies['sessionid']
     remove_session(sessionid)
     session.pop(sessionid, None)
-    return jresponse('log out successful')
+    return jres('log out successful')
 
-@app.route('/home', methods=['GET'])
-@auth_check
-def home():
-    sessionid = request.cookies['sessionid']
-    stored_session = load_session(sessionid)
-    username = stored_session['username']
-    links = [("/profile", "Profile"), ("/appointments", "Appointments"), ("/notifications", "Notifications"), ("/logout", "Log out")]
-    return jsonify(links)
-
-def insert_non_empty_in_dict(d, l):
-    for i,j in l:
-        if j is not None and len(j) > 0:
-            d[i]=j
-
+# @app.route('/home', methods=['GET'])
+# @auth_check
+# def home():
+#     sessionid = request.cookies['sessionid']
+#     stored_session = load_session(sessionid)
+#     username = stored_session['username']
+#     links = [("/profile", "Profile"), ("/appointments", "Appointments"), ("/notifications", "Notifications"), ("/logout", "Log out")]
+#     return jsonify(links)
 #All
 @app.route('/profile', methods=['GET'])
 @auth_check
@@ -140,7 +139,7 @@ def put_edit_profile():
     except:
         return jsonify('profile_edit.html', profile=user['profile'], message='Input error', is_admin=True)
 
-    return jresponse('profile updated')
+    return jres('profile updated')
 
 @app.route('/edit/profile/<username>', methods=['PUT'])
 @auth_check
@@ -159,7 +158,7 @@ def put_edit_user_profile(username):
     except:
         return jsonify('profile_edit.html', profile=user['profile'], message='Input error', is_admin=True)
 
-    return jresponse('profile updated')
+    return jres('profile updated')
 
 @app.route('/appointments', methods=['GET'])
 @auth_check
@@ -168,7 +167,7 @@ def get_appointments():
 
     appointments = load_appointments(user['profile']['email'])
     if appointments is None:
-        return jresponse('no appointments found'), 404
+        return jres('no appointments found'), 404
     return jsonify([x for x in appointments])
 
 @app.route('/appointment', methods=['POST'])
@@ -179,7 +178,7 @@ def post_appointment():
 
     store_appointment(sender=user['profile']['email'], receiver=data['receiver'],
                       date=data['date'], topic=data['topic'], time=data['time'])
-    return jresponse('appointment posted correctly')
+    return jres('appointment posted correctly')
 
 @app.route('/appointment/<id>', methods=['GET'])
 @auth_check
@@ -188,7 +187,7 @@ def get_appointment(id):
 
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
     if appointment is None:
-        return jresponse('appointment not found', 404)
+        return jres('appointment not found', 404)
     return jsonify(appointment)
 
 @app.route('/edit/appointment/<id>', methods=['PUT'])
@@ -198,10 +197,10 @@ def put_appointment(id):
 
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
     if appointment is None:
-        return jresponse('you cannot edit this appointment', type='error')
+        return jres('you cannot edit this appointment', type='error')
     edit_appointment(number=int(id), sender=user['profile']['email'], receiver=data['receiver'],
                      date=data['date'], topic=data['topic'], time=data['time'])
-    return jresponse('appointment updated')
+    return jres('appointment updated')
 
 @app.route('/appointment/<id>', methods=['DELETE'])
 @auth_check
@@ -210,7 +209,7 @@ def delete_appointment(id):
 
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
     if appointment is None or user['profile']['email'] != appointment['sender']:
-        return jresponse('you cannot remove this appointment', type='error')
+        return jres('you cannot remove this appointment', type='error')
     remove_appointment(number=int(id))
     return jsonify('appointment removed')
 
@@ -219,7 +218,7 @@ def delete_appointment(id):
 def get_notifications():
     notifications = load_notifications()
     if notifications is None:
-        return jresponse('no notifications found'), 404
+        return jres('no notifications found'), 404
     return jsonify([x for x in notifications])
 
 @app.route('/notification/<id>', methods=['GET'])
@@ -227,7 +226,7 @@ def get_notifications():
 def get_notification(id):
     notification = load_notification(id)
     if notification is None:
-        return jresponse('notificatin not found', type='error'), 404
+        return jres('notificatin not found', type='error'), 404
     return jsonify(notification)
 
 #Parents
@@ -238,7 +237,7 @@ def get_children():
     username = get_user_from_session(request.cookies['sessionid'])
     children = load_children(username)
     if children is None:
-        return jresponse('No children found'), 404
+        return jres('No children found'), 404
     return jsonify(children)
 
 @app.route('/child/<id>/profile', methods=['GET'])
@@ -248,7 +247,7 @@ def get_child_profile(id):
     user = get_user_from_session(request.cookies['sessionid'])
     child = load_child(user, id)
     if child is None:
-        return jresponse('No child found'), 404
+        return jres('No child found'), 404
     return jsonify(child['profile'])
 
 @app.route('/child/<id>/profile', methods=['PUT'])
@@ -264,9 +263,9 @@ def put_child_profile(id):
 
         update_user_profile(child['username'], data)
     except:
-        return jresponse('Input error', type='error')
+        return jres('Input error', type='error')
 
-    return jresponse('profile updated')
+    return jres('profile updated')
 
 @app.route('/child/<id>/grades', methods=['GET'])
 @auth_check
@@ -275,7 +274,7 @@ def get_child_grades(id):
     user = get_user_from_session(request.cookies['sessionid'])
     grades = load_child_grades(user, id)
     if grades is None:
-        return jresponse('No grades found'), 404
+        return jres('No grades found'), 404
     return jsonify([x for x in grades])
 
 @app.route('/child/<id>/classes', methods=['GET'])
@@ -285,7 +284,7 @@ def get_child_classes(id):
     user = get_user_from_session(request.cookies['sessionid'])
     classes = load_child_grades(user, id)
     if classes is None:
-        return jresponse('No classes found'), 404
+        return jres('No classes found'), 404
     return jsonify([x for x in classes])
 
 @app.route('/payments', methods=['GET'])
@@ -295,7 +294,7 @@ def get_payments_all():
     user = get_user_from_session(request.cookies['sessionid'])
     payments = load_payments(user)
     if payments is None:
-        return jresponse('No payments found'), 404
+        return jres('No payments found'), 404
     return jsonify([x for x in payments])
 
 @app.route('/payments/history', methods=['GET'])
@@ -305,7 +304,7 @@ def get_payments_history():
     user = get_user_from_session(request.cookies['sessionid'])
     payments = load_payments(user, status='paid')
     if payments is None:
-        return jresponse('No payments found'), 404
+        return jres('No payments found'), 404
     return jsonify([x for x in payments])
 
 @app.route('/payments/due', methods=['GET'])
@@ -315,7 +314,7 @@ def get_payments_due():
     user = get_user_from_session(request.cookies['sessionid'])
     payments = load_payments(user, status='due')
     if payments is None:
-        return jresponse('No payments found'), 404
+        return jres('No payments found'), 404
     return jsonify([x for x in payments])
 
 @app.route('/payment/<id>', methods=['GET'])
@@ -325,7 +324,7 @@ def get_payment(id):
     user = get_user_from_session(request.cookies['sessionid'])
     payment = load_payment(user, id)
     if payment is None:
-        return jresponse('No payment found'), 404
+        return jres('No payment found'), 404
     return jsonify(payment)
 
 @app.route('/payment/<id>', methods=['POST'])
@@ -335,8 +334,8 @@ def post_payment(id):
     user = get_user_from_session(request.cookies['sessionid'])
     payment = pay_payment(user, id)
     if payment is None:
-        return jresponse('No payment found'), 404
-    return jresponse('payment was successful')
+        return jres('No payment found'), 404
+    return jres('payment was successful')
 
 #Teachers
 @app.route('/classes', methods=['GET'])
@@ -346,7 +345,7 @@ def get_classes():
     user = get_user_from_session(request.cookies['sessionid'])
     classes = find_classes(user)
     if classes is None:
-        return jresponse('No class found'), 404
+        return jres('No class found'), 404
     return jsonify(classes)
 
 @app.route('/class/<id>', methods=['GET'])
@@ -356,7 +355,7 @@ def get_class(id):
     user = get_user_from_session(request.cookies['sessionid'])
     _class = find_class(user, id)
     if _class is None:
-        return jresponse('No class found'), 404
+        return jres('No class found'), 404
     return jsonify(_class)
 
 @app.route('/class/<id>/grades', methods=['GET'])
@@ -366,7 +365,7 @@ def get_class_grades(id):
     user = get_user_from_session(request.cookies['sessionid'])
     _class = find_class(user, id)
     if _class is None or len(_class['grades']) < 0:
-        return jresponse('No grades found'), 404
+        return jres('No grades found'), 404
     return jsonify(_class['grades'])
 
 @app.route('/class/<id>/grade', methods=['POST'])
@@ -376,11 +375,11 @@ def post_class_grade(id):
     user = get_user_from_session(request.cookies['sessionid'])
     _class = find_class(user, id)
     if _class is None:
-        return jresponse('No class found'), 404
+        return jres('No class found'), 404
     try:
         store_grade(user, id, request.form['mark'], request.form['childid'], request.form['description'])
     except:
-        return jresponse('Error storing the grade', type='error')
+        return jres('Error storing the grade', type='error')
     return jsonify(_class['grades'])
 
 @app.route('/class/<class_id>/grade/<grade_id>', methods=['PUT'])
@@ -390,11 +389,11 @@ def put_class_grade(class_id, grade_id):
     user = get_user_from_session(request.cookies['sessionid'])
     _class = find_class(user, class_id)
     if _class is None:
-        return jresponse('No class found'), 404
+        return jres('No class found'), 404
     try:
         update_grade(user, class_id, grade_id, request.form['mark'], request.form['childid'], request.form['description'])
     except:
-        return jresponse('Error storing the grade', type='error')
+        return jres('Error storing the grade', type='error')
     return jsonify(_class['grades'])
 
 @app.route('/grade/<class_id>/grade/<grade_id>', methods=['DELETE'])
@@ -404,11 +403,11 @@ def delete_grade_grade(class_id, grade_id):
     user = get_user_from_session(request.cookies['sessionid'])
     _class = find_class(user, class_id)
     if _class is None:
-        return jresponse('No class found'), 404
+        return jres('No class found'), 404
     try:
         delete_grade(user, class_id, grade_id)
     except:
-        return jresponse('Error storing the grade', type='error')
+        return jres('Error storing the grade', type='error')
     return jsonify(_class['grades'])
 
 #Admins
@@ -418,7 +417,7 @@ def delete_grade_grade(class_id, grade_id):
 def get_users():
     users = load_all_users()
     if users is None:
-      return jresponse('No user found', type='error')
+      return jres('No user found', type='error')
     return jsonify(users)
 
 @app.route('/user', methods=['POST'])
@@ -429,15 +428,15 @@ def post_user():
       username = request.form["username"]
       user = load_user(username)
       if user is not None:
-          return jresponse('username already exists', type='error')
+          return jres('username already exists', type='error')
       password = request.form["password"]
       type     = request.form["type"]
       salt = str(binascii.hexlify(os.urandom(10)).decode())
       pwdhash = hashlib.sha256(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
       insert_user(username, {'pwdhash':pwdhash, 'salt':salt, 'type':type})
     except Exception as e:
-      return jresponse('Error creating user: '+ str(e.args), type='error')
-    return jresponse('User created successfuly')
+      return jres('Error creating user: '+ str(e.args), type='error')
+    return jres('User created successfuly')
 
 @app.route('/user/<id>', methods=['GET'])
 @auth_check
@@ -445,7 +444,7 @@ def post_user():
 def get_user(id):
     user = load_user_by_id(id)
     if user is None:
-      return jresponse('User not found', type='error')
+      return jres('User not found', type='error')
     return jsonify(user)
 
 @app.route('/user/<id>', methods=['PUT'])
@@ -454,7 +453,7 @@ def get_user(id):
 def put_user(id):
     user = load_user_by_id(id)
     if user is None:
-        return jresponse('No user found', type='error')
+        return jres('No user found', type='error')
 
     try:
       username = request.form["username"]
@@ -464,8 +463,8 @@ def put_user(id):
       pwdhash = hashlib.sha256(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
       insert_user(username, {'pwdhash':pwdhash, 'salt':salt, 'type':type})
     except Exception as e:
-      return jresponse('Error creating user: '+ str(e.args), type='error')
-    return jresponse('User updated successfuly')
+      return jres('Error creating user: '+ str(e.args), type='error')
+    return jres('User updated successfuly')
 
 @app.route('/user/<id>/profile', methods=['PUT'])
 @auth_check
@@ -473,13 +472,13 @@ def put_user(id):
 def put_user_profile(id):
     user = load_user_by_id(id)
     if user is None:
-        return jresponse('No user found', type='error')
+        return jres('No user found', type='error')
     try:
       update_user_profile(user['username'], request.form)
 
     except Exception as e:
-      return jresponse('Error updating profile: '+ str(e.args), type='error')
-    return jresponse('User created successfuly')
+      return jres('Error updating profile: '+ str(e.args), type='error')
+    return jres('User created successfuly')
 
 @app.route('/user/<id>', methods=['DELETE'])
 @auth_check
@@ -488,18 +487,21 @@ def delete_user(id):
 
     users = load_user_by_id(id)
     if users is None:
-      return jresponse('No user found', type='error')
+      return jres('No user found', type='error')
 
     if remove_user(id):
-        return jresponse('succes', type='message')
+        return jres('succes', type='message')
     else:
-        return jresponse('failed', type='error')
+        return jres('failed', type='error')
 
 @app.route('/classes', methods=['GET'])
 @auth_check
 @admin_check
 def get_all_classes():
-    return jsonify(load_all_classes())
+    classes  = load_all_classes()
+    if classes is None:
+        return jres('No class found'), 404
+    return jsonify(classes)
 
 @app.route('/class', methods=['POST'])
 @auth_check
@@ -509,15 +511,18 @@ def post_class():
         teacher = request.form['teacher']
         schedule = request.form['schedule']
     except:
-        return jresponse('Error', type='error')
+        return jres('Error', type='error')
 
-    return jresponse('success')
+    return jres('success')
 
 @app.route('/class/<id>', methods=['GET'])
 @auth_check
 @admin_check
 def get_class_admin(id):
-    return jsonify('class.html')
+    _class  = get_class(id, 'admin')
+    if _class is None:
+        return jres('No class found'), 404
+    return jsonify(_class)
 
 @app.route('/class/<id>', methods=['PUT'])
 @auth_check
