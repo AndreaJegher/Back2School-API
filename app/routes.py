@@ -14,7 +14,10 @@ def jres(s, type='message'):
 
 def get_user_from_session(sessionid):
     stored_session = load_session(sessionid)
-    return load_user(stored_session['username'])
+    user = load_user(stored_session['username'])
+    if user is None:
+        raise ValueError('user not found')
+    return user
 
 def insert_non_empty_in_dict(d, l):
     for i,j in l:
@@ -25,27 +28,27 @@ def admin_check(fun):
     @wraps(fun)
     def wrapped(*args, **kwargs):
         user = get_user_from_session(request.cookies['sessionid'])
-        if user['type'] == 'admin':
+        if user['utype'] == 'admin':
             return fun(*args, **kwargs)
-        return jres('Permission denied', type='error'), 403
+        return jres('Permission denied: ' + str(user['utype']), type='error'), 403
     return wrapped
 
 def parent_check(fun):
     @wraps(fun)
     def wrapped(*args, **kwargs):
         user = get_user_from_session(request.cookies['sessionid'])
-        if user['type'] == 'parent':
+        if user['utype'] == 'parent':
             return fun(*args, **kwargs)
-        return jres('Permission denied', type='error'), 403
+        return jres('Permission denied: ' + str(user['utype']), type='error'), 403
     return wrapped
 
 def teacher_check(fun):
     @wraps(fun)
     def wrapped(*args, **kwargs):
         user = get_user_from_session(request.cookies['sessionid'])
-        if user['type'] == 'teacher':
+        if user['utype'] == 'teacher':
             return fun(*args, **kwargs)
-        return jres('Permission denied', type='error'), 403
+        return jres('Permission denied: ' + str(user['utype']), type='error'), 403
     return wrapped
 
 def auth_check(fun):
@@ -78,12 +81,13 @@ def authenticate():
     if user is not None:
         pwdhash = user['pwdhash']
         salt    = user['pwdsalt']
+
         hashed_password = hashlib.sha256(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
 
         if hashed_password == pwdhash:
             sessionid = str(binascii.hexlify(os.urandom(24)).decode())
             store_session(username, sessionid)
-            response = make_response(jres('login successful'))
+            response = make_response(jres('login successful. Welcome ' + username))
 
             response.set_cookie('sessionid', value=sessionid, httponly=True) # secure=True,
             return response
@@ -125,7 +129,8 @@ def put_edit_profile():
     user = get_user_from_session(request.cookies['sessionid'])
 
     username = user['username']
-    is_admin = user['type'] == 'admin'
+
+    is_admin = user['utype'] == 'admin'
 
     try:
         data = {}
@@ -194,7 +199,7 @@ def get_appointment(id):
 @auth_check
 def put_appointment(id):
     user = get_user_from_session(request.cookies['sessionid'])
-
+    data = request.form
     appointment = load_appointment(number=int(id), email=user['profile']['email'])
     if appointment is None:
         return jres('you cannot edit this appointment', type='error')
@@ -211,7 +216,7 @@ def delete_appointment(id):
     if appointment is None or user['profile']['email'] != appointment['sender']:
         return jres('you cannot remove this appointment', type='error')
     remove_appointment(number=int(id))
-    return jsonify('appointment removed')
+    return jres('appointment removed')
 
 @app.route('/notifications', methods=['GET'])
 @auth_check
@@ -229,7 +234,11 @@ def get_notification(id):
         return jres('notificatin not found', type='error'), 404
     return jsonify(notification)
 
+
+##############################################################################
 #Parents
+##############################################################################
+
 @app.route('/children', methods=['GET'])
 @auth_check
 @parent_check
@@ -238,7 +247,11 @@ def get_children():
     children = load_children(username)
     if children is None:
         return jres('No children found'), 404
+
+    for c in children:
+        c.pop("_id", None)
     return jsonify(children)
+    #return jres(children)
 
 @app.route('/child/<id>/profile', methods=['GET'])
 @auth_check
@@ -267,75 +280,122 @@ def put_child_profile(id):
 
     return jres('profile updated')
 
-@app.route('/child/<id>/grades', methods=['GET'])
+@app.route('/child/<name>/grades', methods=['GET'])
 @auth_check
 @parent_check
-def get_child_grades(id):
+def get_child_grades(name):
     user = get_user_from_session(request.cookies['sessionid'])
-    grades = load_child_grades(user, id)
+    child = load_user(name)
+    if (int(user['number']) in child['parents']):
+        grades = load_child_grades(child['username'], None)
     if grades is None:
         return jres('No grades found'), 404
+    for g in grades:
+        g.pop('_id', None)
     return jsonify([x for x in grades])
 
-@app.route('/child/<id>/classes', methods=['GET'])
+@app.route('/child/<name>/classes', methods=['GET'])
 @auth_check
 @parent_check
-def get_child_classes(id):
+def get_child_classes(name):
     user = get_user_from_session(request.cookies['sessionid'])
-    classes = load_child_grades(user, id)
+    child = load_user(name)
+    if (int(user['number']) in child['parents']):
+        classes = load_child_classes(child['username'])
     if classes is None:
         return jres('No classes found'), 404
+    for c in classes:
+        c.pop('_id', None)
     return jsonify([x for x in classes])
 
+
+###################################################################
+###################################################################
+###################################################################
 @app.route('/payments', methods=['GET'])
 @auth_check
 @parent_check
 def get_payments_all():
     user = get_user_from_session(request.cookies['sessionid'])
-    payments = load_payments(user)
-    if payments is None:
+    all_payments = []
+    if 'children' in user:
+        for c in user['children']:
+            payments = load_payments(c, None)
+            if payments:
+                all_payments = all_payments + payments
+    if not all_payments:
         return jres('No payments found'), 404
-    return jsonify([x for x in payments])
+    for p in all_payments:
+        if '_id' in p:
+            p.pop('_id', None)
+    return jsonify(all_payments)
 
 @app.route('/payments/history', methods=['GET'])
 @auth_check
 @parent_check
 def get_payments_history():
     user = get_user_from_session(request.cookies['sessionid'])
-    payments = load_payments(user, status='paid')
-    if payments is None:
+    all_payments = []
+    if 'children' in user:
+        for c in user['children']:
+            payments = load_payments(c, status='completed')
+            if payments:
+                all_payments = all_payments + payments
+    if not all_payments:
         return jres('No payments found'), 404
-    return jsonify([x for x in payments])
+    for p in all_payments:
+        if '_id' in p:
+            p.pop('_id', None)
+    return jsonify(all_payments)
 
 @app.route('/payments/due', methods=['GET'])
 @auth_check
 @parent_check
 def get_payments_due():
     user = get_user_from_session(request.cookies['sessionid'])
-    payments = load_payments(user, status='due')
-    if payments is None:
+    all_payments = []
+    if 'children' in user:
+        for c in user['children']:
+            payments = load_payments(c, status='due')
+            if payments:
+                all_payments = all_payments + payments
+    if not all_payments:
         return jres('No payments found'), 404
-    return jsonify([x for x in payments])
+    for p in all_payments:
+        if '_id' in p:
+            p.pop('_id', None)
+    return jsonify(all_payments)
 
-@app.route('/payment/<id>', methods=['GET'])
+@app.route('/child/<childid>/payment/<paymentid>', methods=['GET'])
 @auth_check
 @parent_check
-def get_payment(id):
+def get_payment(childid, paymentid):
     user = get_user_from_session(request.cookies['sessionid'])
-    payment = load_payment(user, id)
+    if 'children' in user and int(childid) in user['children']:
+        payment = load_user_payment(childid, paymentid)
     if payment is None:
         return jres('No payment found'), 404
+    if '_id' in payment:
+        payment.pop('_id', None)
     return jsonify(payment)
 
-@app.route('/payment/<id>', methods=['POST'])
+@app.route('/child/<childid>/payment/<paymentid>', methods=['POST'])
 @auth_check
 @parent_check
-def post_payment(id):
+def post_payment(childid, paymentid):
     user = get_user_from_session(request.cookies['sessionid'])
-    payment = pay_payment(user, id)
+    payment = {}
+    if 'children' in user and int(childid) in user['children']:
+        payment = load_user_payment(childid, paymentid)
     if payment is None:
         return jres('No payment found'), 404
-    return jres('payment was successful')
+    try:
+        payment = pay_payment(childid, paymentid)
+        if payment is None:
+            raise ValueError('Payment missing')
+    except Exception as e:
+        jres('Payment was not finalized ' + str(e), 405)
+    return jres('payment was successful ' + str(payment), 200)
 
 #Teachers
 @app.route('/classes', methods=['GET'])
@@ -343,19 +403,24 @@ def post_payment(id):
 @teacher_check
 def get_classes():
     user = get_user_from_session(request.cookies['sessionid'])
-    classes = find_classes(user)
+    classes = find_classes(user['username'])
     if classes is None:
         return jres('No class found'), 404
-    return jsonify(classes)
+    else:
+        for c in classes:
+            c.pop('_id', None)
+            return jsonify(classes)
 
 @app.route('/class/<id>', methods=['GET'])
 @auth_check
 @teacher_check
 def get_class(id):
     user = get_user_from_session(request.cookies['sessionid'])
-    _class = find_class(user, id)
+    _class = find_class(user['username'], id)
     if _class is None:
         return jres('No class found'), 404
+    _class.pop('_id', None)
+    #print(str(_class))
     return jsonify(_class)
 
 @app.route('/class/<id>/grades', methods=['GET'])
@@ -363,24 +428,32 @@ def get_class(id):
 @teacher_check
 def get_class_grades(id):
     user = get_user_from_session(request.cookies['sessionid'])
-    _class = find_class(user, id)
-    if _class is None or len(_class['grades']) < 0:
-        return jres('No grades found'), 404
-    return jsonify(_class['grades'])
+    _class = find_class(user['username'], id)
+    #if _class is None or len(_class['grades']) < 0:
+    #    return jres('No grades found'), 404
+    if _class is None:
+        return jres('Wrong class chosen'), 404
+    else:
+        grades = get_grades_in_class(_class['name'])
+        if grades is None:
+            return jres('No grades found'), 404
+        for g in grades:
+            g.pop('_id', None)
+        return jsonify(grades)
 
 @app.route('/class/<id>/grade', methods=['POST'])
 @auth_check
 @teacher_check
 def post_class_grade(id):
     user = get_user_from_session(request.cookies['sessionid'])
-    _class = find_class(user, id)
+    _class = find_class(user['username'], id)
     if _class is None:
         return jres('No class found'), 404
     try:
-        store_grade(user, id, request.form['mark'], request.form['childid'], request.form['description'])
+        store_grade(_class['name'], request.form['grade'], request.form['student'])
     except:
         return jres('Error storing the grade', type='error')
-    return jsonify(_class['grades'])
+    return jres('Grade stored successfully', 200)
 
 @app.route('/class/<class_id>/grade/<grade_id>', methods=['PUT'])
 @auth_check
@@ -396,20 +469,29 @@ def put_class_grade(class_id, grade_id):
         return jres('Error storing the grade', type='error')
     return jsonify(_class['grades'])
 
-@app.route('/grade/<class_id>/grade/<grade_id>', methods=['DELETE'])
+@app.route('/class/<class_id>/grade/<grade_id>', methods=['DELETE'])
 @auth_check
 @teacher_check
 def delete_grade_grade(class_id, grade_id):
     user = get_user_from_session(request.cookies['sessionid'])
-    _class = find_class(user, class_id)
+    _class = find_class(user['username'], class_id)
     if _class is None:
         return jres('No class found'), 404
     try:
-        delete_grade(user, class_id, grade_id)
+        grades = get_grades_in_class(_class['name'])
+        for g in grades:
+            if int(g["number"]) == int(grade_id):
+                delete_grade(_class['name'], grade_id)
     except:
-        return jres('Error storing the grade', type='error')
-    return jsonify(_class['grades'])
+        return jres('Error deleting the grade', type='error')
+    grades = get_grades_in_class(_class['name'])
+    for g in grades:
+        g.pop('_id', None)
+    return jsonify(grades)
 
+#########################################################################
+#########################################################################
+#########################################################################
 #Admins
 @app.route('/users', methods=['GET'])
 @auth_check
@@ -430,10 +512,10 @@ def post_user():
       if user is not None:
           return jres('username already exists', type='error')
       password = request.form["password"]
-      type     = request.form["type"]
+      type     = request.form["utype"]
       salt = str(binascii.hexlify(os.urandom(10)).decode())
       pwdhash = hashlib.sha256(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
-      insert_user(username, {'pwdhash':pwdhash, 'salt':salt, 'type':type})
+      insert_user(username, {'pwdhash':pwdhash, 'salt':salt, 'utype':type})
     except Exception as e:
       return jres('Error creating user: '+ str(e.args), type='error')
     return jres('User created successfuly')
@@ -458,10 +540,10 @@ def put_user(id):
     try:
       username = request.form["username"]
       password = request.form["password"]
-      type     = request.form["type"]
+      type     = request.form["utype"]
       salt = str(binascii.hexlify(os.urandom(10)).decode())
       pwdhash = hashlib.sha256(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
-      insert_user(username, {'pwdhash':pwdhash, 'salt':salt, 'type':type})
+      insert_user(username, {'pwdhash':pwdhash, 'salt':salt, 'utype':type})
     except Exception as e:
       return jres('Error creating user: '+ str(e.args), type='error')
     return jres('User updated successfuly')
@@ -494,35 +576,43 @@ def delete_user(id):
     else:
         return jres('failed', type='error')
 
-@app.route('/classes', methods=['GET'])
+@app.route('/admin/classes', methods=['GET'])
 @auth_check
 @admin_check
 def get_all_classes():
     classes  = load_all_classes()
     if classes is None:
         return jres('No class found'), 404
-    return jsonify(classes)
+    for c in classes:
+        c.pop('_id', None)
+        return jsonify(classes)
 
-@app.route('/class', methods=['POST'])
+@app.route('/admin/class', methods=['POST'])
 @auth_check
 @admin_check
 def post_class():
     try:
-        teacher = request.form['teacher']
-        schedule = request.form['schedule']
-    except:
-        return jres('Error', type='error')
-
+        req_data = request.get_json()
+        teacher = req_data['teacher']
+        days = req_data['days']
+        classname = req_data['class']
+        students = req_data['students']
+        hours = req_data['hours']
+        insert_class(teacher, students, days, hours, classname)
+    except Exception as e:
+        return jres('Error: ' + str(students) + " === " + str(days) + ":::" + str(e), type='error'), 404
     return jres('success')
 
-@app.route('/class/<id>', methods=['GET'])
+@app.route('/admin/class/<name>', methods=['GET'])
 @auth_check
 @admin_check
-def get_class_admin(id):
-    _class  = get_class(id, 'admin')
+def get_class_admin(name):
+    _class  = get_class_by_name(name)
     if _class is None:
         return jres('No class found'), 404
+    _class.pop('_id', None)
     return jsonify(_class)
+    #return jres("Whatever " + str(_class))
 
 @app.route('/class/<id>', methods=['PUT'])
 @auth_check
@@ -536,29 +626,49 @@ def put_class(id):
 def delete_class(id):
     return jsonify('class.html')
 
-@app.route('/teachers', methods=['GET'])
+@app.route('/admin/teachers', methods=['GET'])
 @auth_check
 @admin_check
 def get_teachers():
-    return jsonify('teachers.html')
+    students = load_users_by_type('teacher')
+    if students is None:
+        return jres('No teacher was found')
+    for s in students:
+        s.pop('_id', None)
+    return jsonify(students)
 
-@app.route('/students', methods=['GET'])
+@app.route('/admin/students', methods=['GET'])
 @auth_check
 @admin_check
 def get_students():
-    return jsonify('students.html')
+    students = load_users_by_type('child')
+    if students is None:
+        return jres('No child was found')
+    for s in students:
+        s.pop('_id', None)
+    return jsonify(students)
 
-@app.route('/admins', methods=['GET'])
+@app.route('/admin/admins', methods=['GET'])
 @auth_check
 @admin_check
 def get_admins():
-    return jsonify('admins.html')
+    students = load_users_by_type('admin')
+    if students is None:
+        return jres('No admin was found')
+    for s in students:
+        s.pop('_id', None)
+    return jsonify(students)
 
-@app.route('/parents', methods=['GET'])
+@app.route('/admin/parents', methods=['GET'])
 @auth_check
 @admin_check
 def get_parents():
-    return jsonify('parents.html')
+    students = load_users_by_type('parent')
+    if students is None:
+        return jres('No parent was found')
+    for s in students:
+        s.pop('_id', None)
+    return jsonify(students)
 
 @app.route('/parent/<parent_id>/children', methods=['GET'])
 @auth_check
@@ -606,19 +716,36 @@ def post_student_class(student_id):
 @auth_check
 @admin_check
 def get_student_payments(student_id):
-    return jsonify('student.html')
+    payments = load_payments(student_id, None)
+    if payments is None:
+        return jres('No payment was found')
+    for p in payments:
+        p.pop('_id', None)
+    return jsonify(payments)
+
 
 @app.route('/student/<student_id>/payment', methods=['POST'])
 @auth_check
 @admin_check
 def post_student_payment(student_id):
-    return jsonify('student.html')
+    req_data = request.get_json()
+    dueDate = req_data['dueDate']
+    amount = req_data['amount']
+    try:
+        create_payment_for_student(student_id, dueDate, amount)
+    except Exception as e:
+        return jres('Error storing the payment ' + str(e), type='error')
+    return jres('Payment saved correctly', 200)
 
 @app.route('/student/<student_id>/payment/<id>', methods=['GET'])
 @auth_check
 @admin_check
 def get_student_payment(student_id, id):
-    return jsonify('student.html')
+    payment = load_user_payment(student_id, id)
+    if payments is None:
+        return jres('No such payment exists')
+    payment.pop('_id', None)
+    return jsonify(payment)
 
 @app.route('/student/<student_id>/payment/<id>', methods=['PUT'])
 @auth_check
@@ -630,7 +757,11 @@ def put_student_payment(student_id, id):
 @auth_check
 @admin_check
 def delete_student_payment(student_id, id):
-    return jsonify('student.html')
+    try:
+        delete_payment_for_user(int(id), int(student_id))
+    except Exception as e:
+        return jres('Error deleting the payment ' + str(e), type='error')
+    return jres('Payment deleted correctly', 200)
 
 @app.route('/notification', methods=['POST'])
 @auth_check

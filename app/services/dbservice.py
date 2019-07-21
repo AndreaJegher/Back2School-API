@@ -1,5 +1,5 @@
 from pymongo import MongoClient, ASCENDING
-
+from datetime import date
 client = MongoClient('localhost', 27017)
 db = client.back2school
 
@@ -53,7 +53,8 @@ def remove_user(id):
     return True
 
 def load_user(username):
-    cursor = users.find({'username':username}, {'_id':0})
+    #cursor = users.find({'username':username}, {'_id':0})
+    cursor = users.find({'username':username})
     if cursor.count() < 1:
         return None
     return cursor.next()
@@ -97,7 +98,12 @@ def remove_session(sessionid):
     sessions.find_one_and_delete({'sessionid':sessionid})
 
 def load_children(parent):
-    cursor = children.find({'parent':parent})
+    parent_full = load_user(parent)
+    parent_id = parent["number"]
+    #cursor = children.find({'parents': parent_id})
+    cursor = users.find({'parents': parent_id})
+    #for id in cursor:
+
     if cursor.count() < 1:
         return None
 
@@ -105,12 +111,21 @@ def load_children(parent):
 
 def load_child(parent, id):
     child = load_user_by_id(id)
-    parent = load_user(parent)
+    if parent is None:
+        raise Exception("Parent not found")
+    children = parent["children"]
     try:
-        if ( id in parent["profile"]["children"] ):
-            return child["profile"]
+        if (int(id) in children):
+            return child
     except:
         return None
+
+def load_users_by_type(usertype):
+    cursor = users.find({'utype': usertype})
+    if cursor.count() < 1:
+        return None
+    return list(cursor)
+
 
 def load_appointments(email):
     cursor = appointments.find({'$or':[{'receiver':email}, {'sender':email}]}, {'_id':0})
@@ -130,7 +145,7 @@ def load_appointment(number, email):
 
 def edit_appointment(number, sender, receiver, date, topic, time):
     appointments.find_one_and_update(
-        {'number':number},
+        {'number': number},
         {'$set' : {'sender':sender, 'receiver':receiver, 'date':date, 'time':time, 'topic':topic}}
     )
 
@@ -149,19 +164,124 @@ def load_notification(number):
         return None
     return cursor
 
-def inser_class(teacher, students, schedule):
-    classes.insert({'number':getNextSequence('classes'), 'teacher':teacher, 'students':[], 'schedule':schedule})
+
+###### CLASSES ###############
+
+def insert_class(teacher, students, days,
+    hours, classname):
+    # print(str(students))
+    # print(str(days))
+    wresult = classes.insert({
+        'number':getNextSequence('classes'),
+        'name': classname,
+        'teacher':teacher,
+        'students':students,
+        'schedule': {'days':days, 'hours': hours}})
+
+    # if wresult['writeConcernError'] is not None:
+    #     raise Exception('error code: ' + str(wresult['writeConcernError']['code'])
+    #         + " msg: " + str(wresult['writeConcernError']['errmsg']))
 
 def load_all_classes():
     cursor = classes.find({}, {'_id':0})
     if cursor.count() < 1:
         return None
+    return list(cursor)
 
-    return cursor
-
-def get_class(id, role):
-    cursor = classes.find({"id":id}, {'_id':0})
+def find_classes(teacher_username):
+    cursor = classes.find({'teacher': teacher_username}, {'_id':0})
     if cursor.count() < 1:
         return None
+    return list(cursor)
 
+def find_class(teacher_username, class_id):
+    cursor = classes.find({'teacher': teacher_username, 'number': int(class_id)})
+    #print(str(teacher_username) + " " + str(int(class_id)))
+    if cursor.count() < 1:
+        return None
+    _class = cursor.next()
+    #print(_class)
+    return _class
+
+def get_class_by_name(classname):
+    cursor = classes.find({'name': classname})
+    if cursor.count() < 1:
+        return None
+    _class = {}
+    _class = cursor.next()
+    #raise Exception('E: ' + str(_class))
+    return _class
+
+def get_grades_in_class(name):
+    print(name)
+    cursor = grades.find({'class': name})
+    if cursor.count() < 1:
+        return None
+    return list(cursor)
+
+def store_grade(classname, grade, student_uname):
+    number = getNextSequence('grades')
+    today = date.today()
+    grades.insert({'number':number, 'class':classname, 'student':student_uname, 'date': str(today), 'grade': int(grade)})
+
+def load_child_grades(student, _class):
+    if _class is None:
+        cursor = grades.find({'student': student})
+    else:
+        cursor = grades.find({'student': student, 'class': _class})
+    if cursor.count() < 1:
+        return None
+    return list(cursor)
+
+def load_child_classes(student):
+    cursor = classes.find({'students': student})
+    if cursor.count() < 1:
+        return None
+    return list(cursor)
+
+def delete_grade(classname, grade_id):
+    grades.find_one_and_delete({'number':int(grade_id), 'class': classname})
+
+
+def load_payments(student_id, status):
+    if status is not None:
+        cursor = payments.find({'userid': int(student_id), 'pstatus': status})
+    else:
+        cursor = payments.find({'userid': int(student_id)})
+    if cursor.count() < 1:
+        return None
+    return list(cursor)
+
+def load_user_payment(user_id, payment_id):
+    cursor = payments.find({'userid': int(user_id), 'number': int(payment_id)})
+    if cursor.count() < 1:
+        return None
     return cursor.next()
+
+def create_payment_for_student(userid, dueDate, amount):
+    sequence = sequences.find({'payments': {'$exists':'true'}})
+    student_id = int(userid)
+    p = sequence.next()
+    wresult = payments.insert({
+    '_id': (p['payments']),
+    'number': (p['payments']),
+    'pstatus': 'due',
+    'dueDate': dueDate,
+    'userid': student_id,
+    'amount': amount })
+
+    sequences.find_one_and_update({'_id': p['_id']}, {'$set':{'payments': (int(p['payments']) + 1)}})
+
+def delete_payment_for_user(user_id, payment_id):
+    payments.find_one_and_delete({'number':payment_id, 'userid': user_id})
+
+def pay_payment(userid, paymentid):
+    query = {'number': int(payment_id), 'userid': int(userid), 'pstatus': 'due'}
+    new_values = {'$set': {'pstatus': 'completed'}}
+    cursor = payments.find_one(query)
+    p = cursor.next()
+    if p is not None:
+        payments.update_one(query, new_values)
+        return p
+    else:
+        return None
