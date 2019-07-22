@@ -243,8 +243,8 @@ def get_notification(id):
 @auth_check
 @parent_check
 def get_children():
-    username = get_user_from_session(request.cookies['sessionid'])
-    children = load_children(username)
+    user = get_user_from_session(request.cookies['sessionid'])
+    children = load_children(user)
     if children is None:
         return jres('No children found'), 404
 
@@ -674,43 +674,81 @@ def get_parents():
 @auth_check
 @admin_check
 def get_parent_children(parent_id):
-    return jsonify('parent.html')
+    parent = load_user_by_id(parent_id)
+    if parent is not None:
+        children = load_children(parent)
+        if children is None:
+            return jres('No child was found', 404)
+        for s in children:
+            s.pop('_id', None)
+        return jsonify(children)
+    return jres('No parent was found', 404)
 
 @app.route('/parent/<parent_id>/child', methods=['POST'])
 @auth_check
 @admin_check
 def post_parent_child(parent_id):
-    return jsonify('parent.html')
+    req_data = request.get_json()
+    username = req_data['username']
+    data = {}
+    profile = {
+        "birthdate": req_data['birthdate'],
+        "name": req_data['name'],
+        "surname": req_data['surname']
+    }
 
-@app.route('/parent/<parent_id>/child/<id>', methods=['GET'])
+    password = req_data['password']
+    salt    = 'datsalt'
+
+    hashed_password = hashlib.sha256(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
+    parent = load_user_by_id(parent_id)
+    if parent is None:
+        return jres('No parent was found', 404)
+
+
+    data['profile'] = profile
+    data['pwdhash'] = hashed_password
+    data['pwdsalt'] = salt
+    data['parents'] = [parent_id]
+    try:
+        insert_child_with_parent(username, data, parent)
+    except Exception as e:
+        return jres('Error: ' + str(parent) + " === " + str(data) + " ::: " + str(e), type='error'), 404
+    return jres('Student ' + str(username) + ' added correctly')
+
+@app.route('/student/<name>/classes', methods=['GET'])
 @auth_check
 @admin_check
-def get_parent_child(parent_id, id):
-    return jsonify('parent.html')
+def get_student_class(name):
+    user = get_user_from_session(request.cookies['sessionid'])
+    child = load_user(name)
+    if child['utype'] == 'child':
+        classes = load_child_classes(child['username'])
+    if classes is None:
+        return jres('No classes found'), 404
+    for c in classes:
+        c.pop('_id', None)
+    #return jsonify([x for x in classes])
+    return jsonify(classes)
 
-@app.route('/parent/<parent_id>/child/<id>', methods=['PUT'])
+@app.route('/class/<class_id>/student/<student_id>', methods=['PUT'])
 @auth_check
 @admin_check
-def put_parent_child(parent_id, id):
-    return jsonify('parent.html')
-
-@app.route('/parent/<parent_id>/child/<id>', methods=['DELETE'])
-@auth_check
-@admin_check
-def delete_parent_child(parent_id, id):
-    return jsonify('parent.html')
-
-@app.route('/teacher/<teacher_id>/class', methods=['POST'])
-@auth_check
-@admin_check
-def post_teacher_class(teacher_id):
-    return jsonify('teacher.html')
-
-@app.route('/student/<student_id>/class', methods=['POST'])
-@auth_check
-@admin_check
-def post_student_class(student_id):
-    return jsonify('student.html')
+def put_student_class(class_id, student_id):
+    user = get_user_from_session(request.cookies['sessionid'])
+    child = load_user_by_id(student_id)
+    _class = find_class_by_id(class_id)
+    if child is None or _class is None:
+        return jres('Paramenters not found', 404)
+    if child['utype'] == 'child' and _class['students']:
+        c = add_student_to_class(class_id, child['username'])
+    else:
+        v = child['username'] in _class['students']
+        return jres('Wrong paramenters: child' + str(child) + ' class: ' + str(_class) + ' bool: ' + str(v), 404)
+    if c is not None:
+        c.pop('_id', None)
+    #return jsonify([x for x in classes])
+    return jsonify(c)
 
 @app.route('/student/<student_id>/payments', methods=['GET'])
 @auth_check
@@ -762,6 +800,45 @@ def delete_student_payment(student_id, id):
     except Exception as e:
         return jres('Error deleting the payment ' + str(e), type='error')
     return jres('Payment deleted correctly', 200)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.route('/parent/<parent_id>/child/<id>', methods=['GET'])
+@auth_check
+@admin_check
+def get_parent_child(parent_id, id):
+    return jsonify('parent.html')
+
+@app.route('/parent/<parent_id>/child/<id>', methods=['PUT'])
+@auth_check
+@admin_check
+def put_parent_child(parent_id, id):
+    return jsonify('parent.html')
+
+@app.route('/parent/<parent_id>/child/<id>', methods=['DELETE'])
+@auth_check
+@admin_check
+def delete_parent_child(parent_id, id):
+    return jsonify('parent.html')
+
+@app.route('/teacher/<teacher_id>/class', methods=['POST'])
+@auth_check
+@admin_check
+def post_teacher_class(teacher_id):
+    return jsonify('teacher.html')
+
+
 
 @app.route('/notification', methods=['POST'])
 @auth_check

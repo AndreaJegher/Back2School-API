@@ -120,6 +120,29 @@ def load_child(parent, id):
     except:
         return None
 
+def insert_child_with_parent(username, data, parent):
+    sequence = sequences.find({'users': {'$exists':'true'}})
+
+    p = sequence.next()
+    childid = p['users']
+    wresult = users.insert({
+    '_id': childid,
+    'number': childid,
+    'username': username,
+    'profile': data['profile'],
+    'parents': data['parents'],
+    'utype': 'child',
+    'pwdhash': data['pwdhash'],
+    'pwdsalt': data['pwdsalt']
+    })
+
+    sequences.find_one_and_update({'_id': p['_id']}, {'$set':{'users': (int(childid) + 1)}})
+
+    users.find_one_and_update(
+        {'number': parent['number']},
+        {'$push': {'children': childid}}
+    )
+
 def load_users_by_type(usertype):
     cursor = users.find({'utype': usertype})
     if cursor.count() < 1:
@@ -202,6 +225,22 @@ def find_class(teacher_username, class_id):
     _class = cursor.next()
     #print(_class)
     return _class
+
+def find_class_by_id(class_id):
+    cursor = classes.find({'number': int(class_id)})
+    #print(str(teacher_username) + " " + str(int(class_id)))
+    if cursor.count() < 1:
+        return None
+    _class = cursor.next()
+    #print(_class)
+    return _class
+
+def add_student_to_class(class_id, student_uname):
+    classes.find_one_and_update(
+        {'number': int(class_id)},
+        {'$push': {'students': student_uname}}
+    )
+    return find_class_by_id(class_id)
 
 def get_class_by_name(classname):
     cursor = classes.find({'name': classname})

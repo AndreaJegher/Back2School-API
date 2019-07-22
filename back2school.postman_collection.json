@@ -1,0 +1,1355 @@
+{
+	"info": {
+		"_postman_id": "905463da-d344-4c4d-b384-9560ff964e4b",
+		"name": "back2school",
+		"description": "Back to school api showcase",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "parents",
+			"item": [
+				{
+					"name": "payments",
+					"item": [
+						{
+							"name": "view all payments",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/payments",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"payments"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "payment history",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/payments/due",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"payments",
+										"due"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "due payments",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/payments/due",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"payments",
+										"due"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get child's payment",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/child/1/payment/17",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"child",
+										"1",
+										"payment",
+										"17"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "pay",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/child/1/payment/16",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"child",
+										"1",
+										"payment",
+										"16"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "children",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/children",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"children"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "child",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/child/3/profile",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"child",
+								"3",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "edit child profile",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "address",
+									"value": "common street",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "newmail@mail.it",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "56565656",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "localhost:5000/child/3/profile",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"child",
+								"3",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "child grades",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/child/firstchild/grades",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"child",
+								"firstchild",
+								"grades"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "child classes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/child/firstchild/classes",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"child",
+								"firstchild",
+								"classes"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "teachers",
+			"item": [
+				{
+					"name": "class grades",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/class/9/grades",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"class",
+								"9",
+								"grades"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "add grade",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "grade",
+									"value": "8",
+									"type": "text"
+								},
+								{
+									"key": "student",
+									"value": "secondchild",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "localhost:5000/class/1/grade",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"class",
+								"1",
+								"grade"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete grade",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/class/9/grade/10",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"class",
+								"9",
+								"grade",
+								"10"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "admins",
+			"item": [
+				{
+					"name": "classes",
+					"item": [
+						{
+							"name": "view classes",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "teacher",
+											"value": "firstteacher",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "schedule",
+											"value": "",
+											"type": "text",
+											"disabled": true
+										}
+									]
+								},
+								"url": {
+									"raw": "localhost:5000/admin/classes",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"admin",
+										"classes"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get class",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/admin/class/biology",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"admin",
+										"class",
+										"biology"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create class",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"teacher\": \"secondteacher\",\n\t\"days\": [\"TUE\", \"THU\"],\n\t\"hours\": \"16.00-18.30\",\n\t\"students\": [\"secondchild\"],\n\t\"class\": \"methodology\"\n}"
+								},
+								"url": {
+									"raw": "localhost:5000/admin/class",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"admin",
+										"class"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "view student's classes",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/student/firstchild/classes",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"student",
+										"firstchild",
+										"classes"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "add student to class",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/class/9/student/14",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"class",
+										"9",
+										"student",
+										"14"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "students' payments",
+					"item": [
+						{
+							"name": "student's payments",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/student/1/payments",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"student",
+										"1",
+										"payments"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get student's payment",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/student/1/payment/1",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"student",
+										"1",
+										"payment",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "add payment",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"dueDate\": \"2/2/2020\",\n\t\"amount\": 500\n}"
+								},
+								"url": {
+									"raw": "localhost:5000/student/1/payment",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"student",
+										"1",
+										"payment"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete payment",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/student/1/payment/22",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"student",
+										"1",
+										"payment",
+										"22"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "manage students",
+					"item": [
+						{
+							"name": "parent's children",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/parent/3/children",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"parent",
+										"3",
+										"children"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "register new child",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"birthdate\": \"19/11/2011\",\n    \"name\": \"newchild1\",\n    \"surname\": \"surnamenewchild1\",\n\t\"username\": \"newchild1\",\n\t\"password\": \"newchild1\"\n}"
+								},
+								"url": {
+									"raw": "localhost:5000/parent/5/child",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"parent",
+										"5",
+										"child"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "add user",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "username",
+									"value": "firstparent",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "password",
+									"value": "firstparent",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "utype",
+									"value": "parent",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "username",
+									"value": "secondchild",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "password",
+									"value": "secondchild",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "utype",
+									"value": "child",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "username",
+									"value": "secondteacher",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "secondteacher",
+									"type": "text"
+								},
+								{
+									"key": "utype",
+									"value": "teacher",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "localhost:5000/user",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get user",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "id",
+								"value": "1",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/user/3",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"user",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "edit profile (admin)",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "admin1",
+									"type": "text"
+								},
+								{
+									"key": "surname",
+									"value": "admin_surname",
+									"type": "text"
+								},
+								{
+									"key": "birthdate",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "localhost:5000/edit/profile/",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"edit",
+								"profile",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete user",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/user/11",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"user",
+								"11"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/users",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view students",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/admin/students",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"admin",
+								"students"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view teachers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/admin/teachers",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"admin",
+								"teachers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view parents",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/admin/parents",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"admin",
+								"parents"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "profile",
+			"item": [
+				{
+					"name": "appointments",
+					"item": [
+						{
+							"name": "appointments",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/appointments",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"appointments"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "view appointment",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/appointment/1",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"appointment",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "set appointment",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "receiver",
+											"value": "firstteacher",
+											"type": "text"
+										},
+										{
+											"key": "date",
+											"value": "12/12/2012",
+											"type": "text"
+										},
+										{
+											"key": "topic",
+											"value": "another topic",
+											"type": "text"
+										},
+										{
+											"key": "time",
+											"value": "120",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "localhost:5000/appointment",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"appointment"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "edit appointment",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "receiver",
+											"value": "firstteacher",
+											"type": "text"
+										},
+										{
+											"key": "date",
+											"value": "1/12/2019",
+											"type": "text"
+										},
+										{
+											"key": "topic",
+											"value": "change topic",
+											"type": "text"
+										},
+										{
+											"key": "time",
+											"value": "not enough again",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "localhost:5000/edit/appointment/1",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"edit",
+										"appointment",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete appointment",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/appointment/7",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"appointment",
+										"7"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "notifications",
+					"item": [
+						{
+							"name": "notifications",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/notifications",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"notifications"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "notification by id",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:5000/notification/1",
+									"host": [
+										"localhost"
+									],
+									"port": "5000",
+									"path": [
+										"notification",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "edit profile",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "address",
+									"value": "via golgi 40",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "something@polimi.it",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "369985554",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "localhost:5000/edit/profile/",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"edit",
+								"profile",
+								""
+							]
+						},
+						"description": "edit personal profile"
+					},
+					"response": []
+				},
+				{
+					"name": "profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost:5000/profile",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "super_secret_password",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "firstteacher",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "firstteacher",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "username",
+							"value": "firstchild",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "firstchild",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "username",
+							"value": "firstparent",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "firstparent",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "username",
+							"value": "secondchild",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "secondchild",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "username",
+							"value": "secondteacher",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "secondteacher",
+							"type": "text",
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/login",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "logout",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:5000/logout",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"logout"
+					]
+				},
+				"description": "Logout service"
+			},
+			"response": []
+		}
+	]
+}
