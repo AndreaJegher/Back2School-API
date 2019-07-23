@@ -315,12 +315,20 @@ def delete_payment_for_user(user_id, payment_id):
     payments.find_one_and_delete({'number':payment_id, 'userid': user_id})
 
 def pay_payment(userid, paymentid):
-    query = {'number': int(payment_id), 'userid': int(userid), 'pstatus': 'due'}
-    new_values = {'$set': {'pstatus': 'completed'}}
-    cursor = payments.find_one(query)
+    #query = {'number': payment_id, 'userid': userid, 'pstatus': 'due'}
+    #, 'userid': userid, 'pstatus': 'due'},
+    payments.update(
+        {'number': payment_id},
+        {'$unset': { 'pstatus': ''}})
+    payments.update(
+        {'number': payment_id},
+        {'$set': { 'pstatus': 'completed'}})
+    #new_values = {'$set': {'pstatus': 'completed'}}
+    #cursor = payments.find_one(query)
+    cursor = payments.find_one({'number': payment_id})
     p = cursor.next()
     if p is not None:
-        payments.update_one(query, new_values)
+        #query, new_values
         return p
     else:
         return None

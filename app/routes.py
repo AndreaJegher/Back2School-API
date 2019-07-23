@@ -387,12 +387,14 @@ def post_payment(childid, paymentid):
     payment = {}
     if 'children' in user and int(childid) in user['children']:
         payment = load_user_payment(childid, paymentid)
+    else:
+        return jres('Child not found. Are they yours?', 404)
     if payment is None:
         return jres('No payment found'), 404
     try:
         payment = pay_payment(childid, paymentid)
         if payment is None:
-            raise ValueError('Payment missing')
+            return jres('Payment missing', 404)
     except Exception as e:
         jres('Payment was not finalized ' + str(e), 405)
     return jres('payment was successful ' + str(payment), 200)
